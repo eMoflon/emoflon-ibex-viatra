@@ -1,11 +1,13 @@
 package org.emoflon.ibex.tgg.compiler.viatra.defaults;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.emf.ecore.EPackage;
 import org.emoflon.ibex.tgg.compiler.TGGCompiler;
 import org.emoflon.ibex.tgg.compiler.defaults.DefaultFilesGenerator;
 import org.emoflon.ibex.tgg.compiler.pattern.IbexPattern;
@@ -16,6 +18,7 @@ import org.emoflon.ibex.tgg.ide.admin.IbexTGGBuilder;
 import org.moflon.tgg.mosl.tgg.TripleGraphGrammarFile;
 import org.moflon.util.LogUtils;
 
+import language.TGG;
 import language.TGGRule;
 
 public class IbexViatraBuilderExtension implements BuilderExtension {
@@ -35,14 +38,27 @@ public class IbexViatraBuilderExtension implements BuilderExtension {
 			builder.createDefaultRunFile("CC_App", (projectName, fileName) 
 					-> DefaultFilesGenerator.generateCCAppFile(projectName, fileName, ENGINE, IMPORT));
 			
-			Optional<TGGProject> internalModel = new EditorTGGtoInternalTGG().generateInternalModels(editorModel, flattenedEditorModel, builder.getProject());
+			
+			
+			
+			
+			Optional<TGGProject> internalModel = builder.computeOrGetFromBlackboard(
+				    EditorTGGtoInternalTGG.INTERNAL_TGG_MODEL, 
+				    () -> new EditorTGGtoInternalTGG().generateInternalModels(editorModel, flattenedEditorModel, builder.getProject()));			
+			
+			
+			LinkedHashMap<EPackage, String> aliases = (new ImportAliasHelper(internalModel.get().getTggModel())).getEpackageToAlias();
+			
 			
 			TGGCompiler compiler = new TGGCompiler(internalModel.get().getTggModel(), internalModel.get().getFlattenedTggModel());
 			compiler.preparePatterns();
+			
+			
+			
 			Map<TGGRule, Collection<IbexPattern>> rulesToPatterns = compiler.getRuleToPatternMap();
 			rulesToPatterns.keySet().forEach(r -> {
 				try {
-					builder.createDefaultFile("model/patterns/", r.getName(), ".vql", (p, f) -> generatePatternFile(rulesToPatterns.get(r)));
+					builder.createDefaultFile("model/patterns/", r.getName(), ".vql", (p, f) -> generatePatternFile(rulesToPatterns.get(r), aliases));
 				} catch (CoreException e) {
 					e.printStackTrace();
 				}
@@ -56,8 +72,7 @@ public class IbexViatraBuilderExtension implements BuilderExtension {
 		}
 	}
 
-	private String generatePatternFile(Collection<IbexPattern> patterns) {
-		// TODO Auto-generated method stub
-		return "Hoochie Mama";
+	private String generatePatternFile(Collection<IbexPattern> patterns, LinkedHashMap<EPackage, String> aliases) {
+		return (new PatternTemplate(aliases)).generatePatternCode(patterns);
 	}
 }
