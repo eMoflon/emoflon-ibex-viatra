@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.CoreException;
@@ -11,10 +12,12 @@ import org.eclipse.emf.ecore.EPackage;
 import org.emoflon.ibex.tgg.compiler.TGGCompiler;
 import org.emoflon.ibex.tgg.compiler.defaults.DefaultFilesGenerator;
 import org.emoflon.ibex.tgg.compiler.pattern.IbexPattern;
+import org.emoflon.ibex.tgg.compiler.pattern.PatternFactory;
 import org.emoflon.ibex.tgg.core.transformation.EditorTGGtoInternalTGG;
 import org.emoflon.ibex.tgg.core.transformation.TGGProject;
 import org.emoflon.ibex.tgg.ide.admin.BuilderExtension;
 import org.emoflon.ibex.tgg.ide.admin.IbexTGGBuilder;
+import org.emoflon.ibex.tgg.operational.util.IbexOptions;
 import org.moflon.tgg.mosl.tgg.TripleGraphGrammarFile;
 import org.moflon.util.LogUtils;
 
@@ -37,11 +40,7 @@ public class IbexViatraBuilderExtension implements BuilderExtension {
 					-> DefaultFilesGenerator.generateSyncAppFile(projectName, fileName, ENGINE, IMPORT));
 			builder.createDefaultRunFile("CC_App", (projectName, fileName) 
 					-> DefaultFilesGenerator.generateCCAppFile(projectName, fileName, ENGINE, IMPORT));
-			
-			
-			
-			
-			
+
 			Optional<TGGProject> internalModel = builder.computeOrGetFromBlackboard(
 				    EditorTGGtoInternalTGG.INTERNAL_TGG_MODEL, 
 				    () -> new EditorTGGtoInternalTGG().generateInternalModels(editorModel, flattenedEditorModel, builder.getProject()));			
@@ -49,8 +48,14 @@ public class IbexViatraBuilderExtension implements BuilderExtension {
 			
 			LinkedHashMap<EPackage, String> aliases = (new ImportAliasHelper(internalModel.get().getTggModel())).getEpackageToAlias();
 			
+			IbexOptions options = new IbexOptions();
+			options.useFlattenedTGG(true);
+			options.projectPath(builder.getProject().getName());
+			options.debug(false);
+			options.tgg(internalModel.get().getTggModel());
+			options.flattenedTgg(internalModel.get().getFlattenedTggModel());
 			
-			TGGCompiler compiler = new TGGCompiler(internalModel.get().getTggModel(), internalModel.get().getFlattenedTggModel());
+			TGGCompiler compiler = new TGGCompiler(options);
 			compiler.preparePatterns();
 			
 			
@@ -64,9 +69,10 @@ public class IbexViatraBuilderExtension implements BuilderExtension {
 				}
 			});
 			
-			
-			// TODO [Erhan-Unification]: Generate anything else you want in the project e.g.:
-			builder.createDefaultFile("model/", "MyFile", ".foo", (p, f) -> "This can be supplied by an xtend template:" + p + "::" + f);
+
+           Collection<IbexPattern> markedPatterns = PatternFactory.getMarkedPatterns().stream().map(p -> (IbexPattern) p).collect(Collectors.toSet());
+		   builder.createDefaultFile("model/patterns/", "EMoflon", ".vql", (p, f) -> generatePatternFile(markedPatterns, aliases));
+
 		} catch (CoreException e) {
 			LogUtils.error(logger, e);
 		}
