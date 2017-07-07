@@ -32,7 +32,12 @@ public class IbexViatraNatureExtension implements NatureExtension {
 						"org.eclipse.viatra.transformation.evm",
 						"org.eclipse.viatra.transformation.evm.transactions",
 						"org.eclipse.viatra.query.runtime.base.itc",
-						"com.google.guava"
+						"com.google.guava",
+						"org.eclipse.xtend",
+						"org.eclipse.xtext.xbase.lib",
+						"org.eclipse.xtend.lib",
+						"org.eclipse.xtend.lib.macro"
+						
 						));
 				
 				return changed;

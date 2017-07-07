@@ -5,8 +5,8 @@ import java.util.LinkedHashMap
 import language.TGGRuleElement
 import language.TGGRuleNode
 import org.eclipse.emf.ecore.EPackage
-import org.emoflon.ibex.tgg.compiler.pattern.IbexPattern
-import org.emoflon.ibex.tgg.compiler.pattern.rulepart.RulePartPattern
+import org.emoflon.ibex.tgg.compiler.patterns.common.IbexPattern
+import org.emoflon.ibex.tgg.compiler.patterns.common.RulePartPattern
 
 class PatternTemplate {
 
@@ -63,7 +63,6 @@ class PatternTemplate {
 	def getAttributechecks(IbexPattern pattern) {
 		return '''
 		«FOR node : pattern.bodySrcTrgNodes»
-			«typeOf(node)»(«node.name»);
 			«FOR attrExpr : node.attrExpr»
 				«IF InplaceAttribute2ViatraCheck.simpleExpression(attrExpr)»
 					«typeOf(node)».«attrExpr.attribute.name»(«node.name», «InplaceAttribute2ViatraCheck.extractViatraEqualCheck(attrExpr)»);
