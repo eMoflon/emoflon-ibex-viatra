@@ -31,12 +31,12 @@ public class IbexViatraBuilderExtension implements BuilderExtension {
 
 	private Logger logger = Logger.getLogger(IbexViatraBuilderExtension.class);
 
-	private static final String ENGINE = "ViatraEngine";
-	private static final String IMPORT = "import org.emoflon.ibex.tgg.runtime.engine.ViatraEngine;";
+	private static final String IMPORT = "";
 
-	private static final String RUN = "src/org/emoflon/ibex/tgg/run/";
-	private static final String PATTERNS = "model/patterns/";
-	private static final String VIATRA_TRANSFORMATION = "ViatraTransformation";
+	private static final String RUN_PATH = "src/org/emoflon/ibex/tgg/run/";
+	private static final String PATTERNS_FOLDER = "model/patterns";
+	private static final String PATTERNS_PATH = PATTERNS_FOLDER + "/";
+	private static final String VIATRA_ENGINE = "ViatraEngine";
 	private static final String XTEND = ".xtend";
 	private static final String VQL = ".vql";
 	
@@ -66,7 +66,7 @@ public class IbexViatraBuilderExtension implements BuilderExtension {
 		String projectName = builder.getProject().getName();
 		TGG tgg = internalModel.getFlattenedTggModel();
 		try {
-			builder.createIfNotExists(RUN, VIATRA_TRANSFORMATION, XTEND,
+			builder.createIfNotExists(RUN_PATH, VIATRA_ENGINE, XTEND,
 					(p, f) -> generateViatraTransformationFile(tgg, projectName));
 		} catch (CoreException e) {
 			e.printStackTrace();
@@ -95,7 +95,7 @@ public class IbexViatraBuilderExtension implements BuilderExtension {
 		Map<TGGRule, Collection<IbexPattern>> rulesToPatterns = compiler.getRuleToPatternMap();
 		rulesToPatterns.keySet().forEach(r -> {
 			try {
-				builder.createIfNotExists(PATTERNS, r.getName(), VQL,
+				builder.createIfNotExists(PATTERNS_PATH, r.getName(), VQL,
 						(p, f) -> generatePatternFile(rulesToPatterns.get(r), aliases));
 			} catch (CoreException e) {
 				e.printStackTrace();
@@ -104,17 +104,17 @@ public class IbexViatraBuilderExtension implements BuilderExtension {
 
 		Collection<IbexPattern> markedPatterns = PatternFactory.getMarkedPatterns().stream().map(p -> (IbexPattern) p)
 				.collect(Collectors.toSet());
-		builder.createIfNotExists(PATTERNS, "EMoflon", VQL,
+		builder.createIfNotExists(PATTERNS_PATH, "EMoflon", VQL,
 				(p, f) -> generatePatternFile(markedPatterns, aliases));
 	}
 
 	private void generateRunnableStubs(IbexTGGBuilder builder) throws CoreException {
 		builder.createDefaultRunFile("MODELGEN_App", (projectName, fileName) -> DefaultFilesGenerator
-				.generateModelGenFile(projectName, fileName, ENGINE, IMPORT));
+				.generateModelGenFile(projectName, fileName, VIATRA_ENGINE, IMPORT));
 		builder.createDefaultRunFile("SYNC_App", (projectName, fileName) -> DefaultFilesGenerator
-				.generateSyncAppFile(projectName, fileName, ENGINE, IMPORT));
+				.generateSyncAppFile(projectName, fileName, VIATRA_ENGINE, IMPORT));
 		builder.createDefaultRunFile("CC_App", (projectName, fileName) -> DefaultFilesGenerator
-				.generateCCAppFile(projectName, fileName, ENGINE, IMPORT));
+				.generateCCAppFile(projectName, fileName, VIATRA_ENGINE, IMPORT));
 	}
 
 	private String generatePatternFile(Collection<IbexPattern> patterns, LinkedHashMap<EPackage, String> aliases) {
@@ -125,10 +125,10 @@ public class IbexViatraBuilderExtension implements BuilderExtension {
 	public void performClean(IbexTGGBuilder builder) {
 
 		try {
-			IFolder patterns = builder.getProject().getFolder("model/patterns");
+			IFolder patterns = builder.getProject().getFolder(PATTERNS_FOLDER);
 			if (patterns.exists())
 				patterns.delete(true, new NullProgressMonitor());
-			IFile viatraTrafo = builder.getProject().getFile(RUN+VIATRA_TRANSFORMATION);
+			IFile viatraTrafo = builder.getProject().getFile(RUN_PATH+VIATRA_ENGINE+XTEND);
 			if(viatraTrafo.exists())
 				viatraTrafo.delete(true, new NullProgressMonitor());
 		} catch (Exception e) {

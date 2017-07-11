@@ -8,8 +8,8 @@ class ManipulationTemplate {
 
 	def getManipulationCode(TGG tgg, String projectName) {
 
-		val suffixes = #{PatternSuffixes.CONSISTENCY, PatternSuffixes.FWD, PatternSuffixes.BWD, PatternSuffixes.MODELGEN,
-			PatternSuffixes.CC}
+		val suffixes = #{PatternSuffixes.CONSISTENCY, PatternSuffixes.FWD, PatternSuffixes.BWD,
+			PatternSuffixes.MODELGEN, PatternSuffixes.CC}
 
 		return '''
 			
@@ -22,7 +22,7 @@ class ManipulationTemplate {
 				import org.eclipse.viatra.transformation.evm.specific.Lifecycles
 				import org.eclipse.viatra.transformation.evm.specific.crud.CRUDActivationStateEnum
 				import org.eclipse.viatra.transformation.runtime.emf.rules.EventDrivenTransformationRuleGroup
-				import org.emoflon.ibex.tgg.runtime.engine.ViatraEngine
+				import org.emoflon.ibex.tgg.runtime.engine.AbstractViatraEngine
 				import org.emoflon.ibex.tgg.runtime.engine.OperationMode
 				import org.apache.log4j.Logger
 				import org.apache.log4j.LogManager
@@ -30,7 +30,7 @@ class ManipulationTemplate {
 				import org.apache.log4j.Level
 				import org.emoflon.ibex.tgg.patterns.*
 				
-				class ViatraTransformation{	
+				class ViatraEngine extends AbstractViatraEngine{	
 					
 					
 					/* Transformation-related extensions */
@@ -41,31 +41,22 @@ class ManipulationTemplate {
 				
 					protected ViatraQueryEngine engine
 				
-					private ViatraEngine ibexViatraEngine;
 					
-					// protected EventDrivenTransformationRule<?,?> exampleRule
-					new(ViatraEngine ibexViatraEngine) {
-						this.ibexViatraEngine = ibexViatraEngine
-						
+					public override def execute() {
 						// Create EMF scope and EMF IncQuery engine based on the resource
-						val scope = new EMFScope(ibexViatraEngine.getResourceSet())
+						val scope = new EMFScope(getResourceSet())
 						engine = ViatraQueryEngine.on(scope);
-						
+												
 						val loggers = Collections.<Logger>list(LogManager.getCurrentLoggers());
 						loggers.add(LogManager.getRootLogger());
 						for ( Logger logger : loggers ) {
-						   logger.setLevel(Level.OFF);
+							logger.setLevel(Level.OFF);
 						}
-					
 						createTransformation
-					
-					}
-					
-					public def execute() {
 						transformation.executionSchema.startUnscheduledExecution
 					}
 					
-					def dispose() {
+					def override terminate() {
 						if (transformation != null) {
 							transformation.dispose
 						}
@@ -79,27 +70,31 @@ class ManipulationTemplate {
 					}
 					
 					private def getTransformationRuleGroup() {
-						if (ibexViatraEngine.mode == OperationMode.SYNCH)
+						if (getMode() == OperationMode.SYNCH)
 							return getSynch
-						else if (ibexViatraEngine.mode == OperationMode.MODELGEN)
+						else if (getMode() == OperationMode.MODELGEN)
 							return get«PatternSuffixes.MODELGEN»
-						else if (ibexViatraEngine.mode == OperationMode.CC)
+						else if (getMode() == OperationMode.CC)
 							return get«PatternSuffixes.CC»
 					}
 					
 					private def getSynch() {
 						new EventDrivenTransformationRuleGroup(
-							«FOR rule : tgg.rules SEPARATOR ", "»
+							«FOR rule : IgnoredMatchesHelper.relevantRules(tgg, PatternSuffixes.CONSISTENCY) SEPARATOR ", "»
+                                «IF !IgnoredMatchesHelper.ignoreMatches(rule, PatternSuffixes.FWD)»							   
 								get«rule.name»«PatternSuffixes.FWD»(),
+								«ENDIF»
+								«IF !IgnoredMatchesHelper.ignoreMatches(rule, PatternSuffixes.BWD)»	
 								get«rule.name»«PatternSuffixes.BWD»(),
-								get«rule.name»«PatternSuffixes.CONSISTENCY»()
+								«ENDIF»
+								get«rule.name»«PatternSuffixes.CONSISTENCY»()	
 							«ENDFOR»
 							)
 					}
 					
 					private def get«PatternSuffixes.MODELGEN»(){
 						new EventDrivenTransformationRuleGroup(
-							«FOR rule : tgg.rules SEPARATOR ", "»
+							«FOR rule : IgnoredMatchesHelper.relevantRules(tgg, PatternSuffixes.MODELGEN) SEPARATOR ", "»
 								get«rule.name»«PatternSuffixes.MODELGEN»()
 							«ENDFOR»
 							)
@@ -107,7 +102,7 @@ class ManipulationTemplate {
 					
 					private def get«PatternSuffixes.CC»(){
 						new EventDrivenTransformationRuleGroup(
-							«FOR rule : tgg.rules SEPARATOR ", "»
+							«FOR rule : IgnoredMatchesHelper.relevantRules(tgg, PatternSuffixes.CC) SEPARATOR ", "»
 								get«rule.name»«PatternSuffixes.CC»()
 							«ENDFOR»
 						)
@@ -116,25 +111,27 @@ class ManipulationTemplate {
 					
 					«FOR suffix : suffixes»
 						«FOR rule : tgg.rules»
+		                  «IF !IgnoredMatchesHelper.ignoreMatches(rule, suffix)»
+
 							private def get«rule.name»«suffix»() {
 								createRule.name("«rule.name»«suffix»").precondition(«rule.name»«suffix»Matcher.querySpecification).action(
-									«IF !IgnoredMatchesHelper.ignoreMatches(rule, suffix)»
-										«IF suffix.equals(PatternSuffixes.CONSISTENCY)»
-											CRUDActivationStateEnum.CREATED) []
-											.action(CRUDActivationStateEnum.DELETED)[
-											ibexViatraEngine.addBrokenMatch(it)]
-										«ELSE»
+								«IF suffix.equals(PatternSuffixes.CONSISTENCY)»
+									CRUDActivationStateEnum.CREATED) []
+									.action(CRUDActivationStateEnum.DELETED)[
+									addBrokenMatch(it)]
+								«ELSE»
 											
-											CRUDActivationStateEnum.CREATED) [
-											ibexViatraEngine.addOperationalRuleMatch("«rule.name»", it)
-											].action(CRUDActivationStateEnum.DELETED)[
-											ibexViatraEngine.removeOperationalRuleMatch(it)]	
-										«ENDIF»
-									«ENDIF»
-								.addLifeCycle(				
-									Lifecycles.getDefault(false, true)
-									).build
-							}
+								    CRUDActivationStateEnum.CREATED) [
+									addOperationalRuleMatch("«rule.name»", it)
+									].action(CRUDActivationStateEnum.DELETED)[
+									removeOperationalRuleMatch(it)]	
+								«ENDIF»
+									
+							       .addLifeCycle(				
+							       Lifecycles.getDefault(false, true)
+							       ).build
+							       }
+							«ENDIF»
 						«ENDFOR»
 						
 					«ENDFOR»

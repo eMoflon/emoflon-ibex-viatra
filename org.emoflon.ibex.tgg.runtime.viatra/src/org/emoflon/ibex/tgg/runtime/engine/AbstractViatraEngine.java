@@ -1,7 +1,13 @@
 package org.emoflon.ibex.tgg.runtime.engine;
 
+import java.io.File;
+
+import org.eclipse.emf.common.util.URI;
+import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
+import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
 import org.eclipse.viatra.query.runtime.api.IPatternMatch;
 import org.emoflon.ibex.tgg.operational.OperationalStrategy;
 import org.emoflon.ibex.tgg.operational.PatternMatchingEngine;
@@ -14,9 +20,9 @@ import gnu.trove.map.hash.THashMap;
 import gnu.trove.set.hash.THashSet;
 import language.TGG;
 
-public class ViatraEngine implements PatternMatchingEngine {
+public abstract class AbstractViatraEngine implements PatternMatchingEngine {
 
-	private OperationalStrategy strategy;
+	protected OperationalStrategy strategy;
 	
 	private THashMap<IPatternMatch, ViatraMatch> matches = new THashMap<>();
 	
@@ -26,7 +32,9 @@ public class ViatraEngine implements PatternMatchingEngine {
 	
 	private THashSet<ViatraMatch> brokenConsistencyMatches = new THashSet<>();
 	
-	private ResourceSet rs = new ResourceSetImpl();
+	private boolean started = false;
+	
+	private ResourceSet rs;
 	
 	@Override
 	public void registerInternalMetamodels() {
@@ -35,7 +43,19 @@ public class ViatraEngine implements PatternMatchingEngine {
 
 	@Override
 	public ResourceSet createAndPrepareResourceSet(String workspacePath) {
-		return rs;
+		return createDefaultResourceSet(workspacePath);
+	}
+	
+	private ResourceSet createDefaultResourceSet(String workspaceRootPath) {		
+		final ResourceSet resourceSet = new ResourceSetImpl();
+		resourceSet.setPackageRegistry(EPackage.Registry.INSTANCE);
+		resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put(
+				Resource.Factory.Registry.DEFAULT_EXTENSION, new XMIResourceFactoryImpl());
+				
+		resourceSet.getURIConverter().getURIMap().put(
+				URI.createPlatformResourceURI("/", true), URI.createFileURI(workspaceRootPath + File.separatorChar));
+		
+		return resourceSet;
 	}
 	
 	public ResourceSet getResourceSet(){
@@ -44,6 +64,12 @@ public class ViatraEngine implements PatternMatchingEngine {
 
 	@Override
 	public void updateMatches() {
+		
+		if(!started){
+			execute();
+			started = true;
+		}
+		
 		addedOperationalMatches.keySet().forEach(m -> strategy.addOperationalRuleMatch(addedOperationalMatches.get(m), m));
 		removedOperationalMatches.forEach(strategy::removeOperationalRuleMatch);
 		brokenConsistencyMatches.forEach(strategy::addBrokenMatch);
@@ -61,6 +87,7 @@ public class ViatraEngine implements PatternMatchingEngine {
 	@Override
 	public void initialise(ResourceSet rs, OperationalStrategy operationalStrategy, IbexOptions options) {
 		this.strategy = operationalStrategy;
+		this.rs = rs;
 	}
 	
 	private ViatraMatch getViatraMatch(IPatternMatch match){
@@ -93,6 +120,8 @@ public class ViatraEngine implements PatternMatchingEngine {
 		
 		throw new RuntimeException("Operation mode unknown");
 	}
+	
+	protected abstract void execute();
 
 	
 }
