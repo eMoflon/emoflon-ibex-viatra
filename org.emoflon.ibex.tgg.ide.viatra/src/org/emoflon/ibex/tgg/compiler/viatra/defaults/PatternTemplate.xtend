@@ -7,11 +7,16 @@ import language.TGGRuleNode
 import org.eclipse.emf.ecore.EPackage
 import org.emoflon.ibex.tgg.compiler.patterns.common.IbexPattern
 import org.emoflon.ibex.tgg.compiler.patterns.common.RulePartPattern
+import java.util.Arrays
+import java.util.List
 
 class PatternTemplate {
 
 	private LinkedHashMap<EPackage, String> importAliases;
-
+	
+	private List<String> keywords = Arrays.asList("package", "pattern");
+	
+	
 	new(LinkedHashMap<EPackage, String> importAliases) {
 		this.importAliases = importAliases;
 	}
@@ -44,7 +49,7 @@ class PatternTemplate {
 				«ENDFOR»
 				
 				«FOR edge : pattern.bodyEdges»
-					«typeOf(edge.srcNode)».«edge.type.name»(«edge.srcNode.name», «edge.trgNode.name»);
+					«typeOf(edge.srcNode)».«IF isKeyword(edge.type.name)»^«ENDIF»«edge.type.name»(«edge.srcNode.name», «edge.trgNode.name»);
 				«ENDFOR»
 				
 				«FOR corr : pattern.bodyCorrNodes»
@@ -58,6 +63,10 @@ class PatternTemplate {
 				«ENDIF»
 			}
 		'''
+	}
+	
+	def boolean isKeyword(String name) {
+		return keywords.contains(name)
 	}
 
 	def getAttributechecks(IbexPattern pattern) {
