@@ -1,6 +1,7 @@
 package org.emoflon.ibex.tgg.ide.viatra;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.apache.log4j.Logger;
@@ -38,7 +39,7 @@ public class IbexViatraNatureExtension implements NatureExtension {
 						"org.eclipse.xtend.lib",
 						"org.eclipse.xtend.lib.macro"
 						
-						));
+						), new ArrayList<>());
 				
 				return changed;
 			});

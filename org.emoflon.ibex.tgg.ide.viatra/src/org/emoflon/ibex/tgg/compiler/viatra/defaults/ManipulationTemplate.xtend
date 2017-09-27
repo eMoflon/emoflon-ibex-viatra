@@ -9,7 +9,7 @@ class ManipulationTemplate {
 	def getManipulationCode(TGG tgg, String projectName) {
 
 		val suffixes = #{PatternSuffixes.CONSISTENCY, PatternSuffixes.FWD, PatternSuffixes.BWD,
-			PatternSuffixes.MODELGEN, PatternSuffixes.CC}
+			PatternSuffixes.GEN, PatternSuffixes.CC}
 
 		return '''
 			
@@ -73,7 +73,7 @@ class ManipulationTemplate {
 						if (getMode() == OperationMode.SYNCH)
 							return getSynch
 						else if (getMode() == OperationMode.MODELGEN)
-							return get«PatternSuffixes.MODELGEN»
+							return get«PatternSuffixes.GEN»
 						else if (getMode() == OperationMode.CC)
 							return get«PatternSuffixes.CC»
 					}
@@ -92,10 +92,10 @@ class ManipulationTemplate {
 							)
 					}
 					
-					private def get«PatternSuffixes.MODELGEN»(){
+					private def get«PatternSuffixes.GEN»(){
 						new EventDrivenTransformationRuleGroup(
-							«FOR rule : IgnoredMatchesHelper.relevantRules(tgg, PatternSuffixes.MODELGEN) SEPARATOR ", "»
-								get«rule.name»«PatternSuffixes.MODELGEN»()
+							«FOR rule : IgnoredMatchesHelper.relevantRules(tgg, PatternSuffixes.GEN) SEPARATOR ", "»
+								get«rule.name»«PatternSuffixes.GEN»()
 							«ENDFOR»
 							)
 					}

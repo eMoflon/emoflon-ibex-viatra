@@ -83,7 +83,6 @@ public class IbexViatraBuilderExtension implements BuilderExtension {
 				.getEpackageToAlias();
 
 		IbexOptions options = new IbexOptions();
-		options.useFlattenedTGG(true);
 		options.projectPath(builder.getProject().getName());
 		options.debug(false);
 		options.tgg(internalModel.getTggModel());

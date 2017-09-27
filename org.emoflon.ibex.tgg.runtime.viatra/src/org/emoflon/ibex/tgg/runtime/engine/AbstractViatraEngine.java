@@ -4,6 +4,7 @@ import java.io.File;
 
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EPackage;
+import org.eclipse.emf.ecore.EPackage.Registry;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
@@ -85,9 +86,8 @@ public abstract class AbstractViatraEngine implements PatternMatchingEngine {
 	}
 
 	@Override
-	public void initialise(ResourceSet rs, OperationalStrategy operationalStrategy, IbexOptions options) {
+	public void initialise(Registry registry, OperationalStrategy operationalStrategy, IbexOptions options) {
 		this.strategy = operationalStrategy;
-		this.rs = rs;
 	}
 	
 	private ViatraMatch getViatraMatch(IPatternMatch match){
@@ -122,6 +122,11 @@ public abstract class AbstractViatraEngine implements PatternMatchingEngine {
 	}
 	
 	protected abstract void execute();
+
+	@Override
+	public void monitor(ResourceSet rs) {
+		this.rs = rs;		
+	}
 
 	
 }
