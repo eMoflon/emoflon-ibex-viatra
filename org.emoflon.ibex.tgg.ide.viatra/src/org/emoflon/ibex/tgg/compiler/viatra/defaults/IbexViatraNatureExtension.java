@@ -21,14 +21,6 @@ public class IbexViatraNatureExtension implements NatureExtension {
 				changed |= ManifestFileUpdater.updateDependencies(
 						manifest,
 						Arrays.asList(
-								// Viatra deps
-								"org.eclipse.viatra.query.patternlanguage.emf",
-								"org.eclipse.viatra.query.runtime",
-								"org.eclipse.viatra.query.runtime.base",
-								"org.eclipse.viatra.query.runtime.matchers",
-								"org.eclipse.viatra.query.runtime.rete",
-								"org.eclipse.viatra.query.runtime.base.itc",
-
 								// Ibex Viatra deps
 								"org.emoflon.ibex.tgg.runtime.viatra"
 						));

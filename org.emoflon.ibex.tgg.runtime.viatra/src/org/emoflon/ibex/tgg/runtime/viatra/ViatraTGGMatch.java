@@ -1,9 +1,9 @@
 package org.emoflon.ibex.tgg.runtime.viatra;
 
 import org.eclipse.viatra.query.runtime.api.IPatternMatch;
-import org.emoflon.ibex.tgg.compiler.patterns.PatternUtil;
 import org.emoflon.ibex.gt.viatra.runtime.ViatraGTMatch;
 import org.emoflon.ibex.tgg.compiler.patterns.PatternType;
+import org.emoflon.ibex.tgg.compiler.patterns.PatternUtil;
 import org.emoflon.ibex.tgg.operational.matches.ITGGMatch;
 import org.emoflon.ibex.tgg.operational.matches.SimpleTGGMatch;
 

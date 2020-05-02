@@ -5,17 +5,19 @@ Bundle-SymbolicName: org.emoflon.ibex.gt.viatra;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: org.emoflon.ibex.gt.viatra
 Require-Bundle: org.eclipse.emf.common;bundle-version="2.17.0",
- org.eclipse.viatra.query.patternlanguage.emf;bundle-version="2.2.1",
- org.eclipse.viatra.query.runtime;bundle-version="2.2.1",
- org.eclipse.xtext.xbase;bundle-version="2.19.0",
+ org.eclipse.viatra.query.patternlanguage.emf;bundle-version="2.2.1";visibility:=reexport,
+ org.eclipse.viatra.query.runtime;bundle-version="2.2.1";visibility:=reexport,
+ org.eclipse.xtext.xbase;bundle-version="2.19.0";visibility:=reexport,
  org.apache.log4j;bundle-version="1.2.15",
  org.eclipse.emf.ecore.xmi;bundle-version="2.16.0",
  org.emoflon.ibex.common;bundle-version="1.0.0",
  com.google.inject;bundle-version="3.0.0",
  org.emoflon.ibex.gt;bundle-version="1.0.0",
- org.eclipse.xtext;bundle-version="2.19.0",
- org.eclipse.viatra.query.runtime.localsearch;bundle-version="2.2.1",
- org.eclipse.viatra.query.runtime.rete;bundle-version="2.2.1",
- org.eclipse.viatra.query.runtime.base.itc;bundle-version="2.2.1",
- org.eclipse.collections;bundle-version="9.2.0"
-Export-Package: org.emoflon.ibex.gt.viatra.runtime
+ org.eclipse.xtext;bundle-version="2.19.0";visibility:=reexport,
+ org.eclipse.viatra.query.runtime.localsearch;bundle-version="2.2.1";visibility:=reexport,
+ org.eclipse.viatra.query.runtime.rete;bundle-version="2.2.1";visibility:=reexport,
+ org.eclipse.viatra.query.runtime.base.itc;bundle-version="2.2.1";visibility:=reexport,
+ org.eclipse.collections;bundle-version="9.2.0";visibility:=reexport,
+ org.emoflon.ibex.patternmodel
+Export-Package: org.emoflon.ibex.gt.viatra.ide.codegen,
+ org.emoflon.ibex.gt.viatra.runtime

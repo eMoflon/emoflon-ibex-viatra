@@ -15,14 +15,13 @@ import org.emoflon.ibex.common.operational.IMatch;
 import org.emoflon.ibex.common.operational.IMatchObserver;
 import org.emoflon.ibex.gt.viatra.runtime.IBeXToViatraPatternTransformation;
 import org.emoflon.ibex.gt.viatra.runtime.ViatraGTEngine;
+import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXPatternSet;
 import org.emoflon.ibex.tgg.compiler.transformations.patterns.ContextPatternTransformation;
 import org.emoflon.ibex.tgg.operational.IBlackInterpreter;
 import org.emoflon.ibex.tgg.operational.defaults.IbexOptions;
 import org.emoflon.ibex.tgg.operational.strategies.modules.IbexExecutable;
 import org.emoflon.ibex.tgg.operational.strategies.modules.MatchDistributor;
 import org.emoflon.ibex.tgg.operational.strategies.sync.SYNC;
-
-import IBeXLanguage.IBeXPatternSet;
 
 public class ViatraTGGEngine extends ViatraGTEngine implements IBlackInterpreter {
 	
@@ -105,7 +104,7 @@ public class ViatraTGGEngine extends ViatraGTEngine implements IBlackInterpreter
 					}
 					else 
 						app.removeMatch(iMatch);
-					System.out.println("DIS");
+//					System.out.println("DIS");
 				}
 				
 				@Override
@@ -119,7 +118,7 @@ public class ViatraTGGEngine extends ViatraGTEngine implements IBlackInterpreter
 					}
 					else 
 						app.addMatch(iMatch);
-					System.out.println("APP");
+//					System.out.println("APP");
 				}
 			};
 			engine.addMatchUpdateListener(matcher, listener, true);
@@ -139,11 +138,11 @@ public class ViatraTGGEngine extends ViatraGTEngine implements IBlackInterpreter
 			if(match instanceof ViatraTGGMatch) {
 				if(((ViatraTGGMatch) match).getDisapperance()) {
 					app.removeMatch(match);
-					System.out.println("Match DIS: " +  match);
+//					System.out.println("Match DIS: " +  match);
 				}
 				else {
 					app.addMatch(match);
-					System.out.println("Match APP: " +  match);
+//					System.out.println("Match APP: " +  match);
 				}
 			}
 		}
@@ -154,7 +153,7 @@ public class ViatraTGGEngine extends ViatraGTEngine implements IBlackInterpreter
 	public void terminate() {
 		if(executable instanceof SYNC)
 			updateMatches();
-		Logger.getRootLogger().setLevel(Level.ALL);
+//		Logger.getRootLogger().setLevel(Level.ALL);
 		engine.wipe();
 		engine.dispose();
 	}

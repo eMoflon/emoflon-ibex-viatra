@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Viatra
-Bundle-SymbolicName: org.emoflon.ibex.tgg.ide.viatra
+Bundle-SymbolicName: org.emoflon.ibex.tgg.ide.viatra;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Automatic-Module-Name: org.emoflon.ibex.tgg.ide.viatra
 Require-Bundle: org.apache.log4j;bundle-version="1.2.15",

@@ -1,18 +1,11 @@
 package org.emoflon.ibex.gt.viatra.runtime;
 
 import java.util.Arrays;
-import java.util.List;
 
 import org.eclipse.viatra.query.runtime.matchers.psystem.IExpressionEvaluator;
 import org.eclipse.viatra.query.runtime.matchers.psystem.IValueProvider;
-import org.eclipse.xtext.xbase.lib.Pure;
 import org.emoflon.ibex.gt.viatra.runtime.IBeXToViatraPatternTransformation.FunctionType;
 import org.emoflon.ibex.gt.viatra.runtime.IBeXToViatraPatternTransformation.Operator;
-
-import IBeXLanguage.IBeXAttributeExpression;
-import IBeXLanguage.IBeXAttributeValue;
-import IBeXLanguage.IBeXCSP;
-import IBeXLanguage.IBeXConstant;
 
 /**
  * Separate class to create IExpressionEvaluator
