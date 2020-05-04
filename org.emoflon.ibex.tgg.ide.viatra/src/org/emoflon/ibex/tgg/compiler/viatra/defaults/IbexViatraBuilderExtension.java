@@ -43,7 +43,7 @@ public class IbexViatraBuilderExtension implements BuilderExtension {
 					-> ViatraFilesGenerator.generateIntegrateAppFile(projectName, fileName));
 			builder.createDefaultConfigFile("_DefaultRegistrationHelper", (projectName, fileName) 
 					-> ViatraFilesGenerator.generateDefaultRegHelperFile(projectName));
-			builder.enforceDefaultConfigFile("ViatraRegistrationHelper", (projectName, fileName)
+			builder.createDefaultConfigFile("ViatraRegistrationHelper", (projectName, fileName)
 					-> ViatraFilesGenerator.generateRegHelperFile(projectName, editorModel));
 		} catch (CoreException e) {
 			LogUtils.error(logger, e);
