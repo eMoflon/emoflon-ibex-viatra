@@ -21,12 +21,11 @@ import org.eclipse.viatra.query.patternlanguage.emf.vql.ReferenceType;
 import org.eclipse.viatra.query.patternlanguage.emf.vql.Variable;
 import org.eclipse.viatra.query.runtime.matchers.psystem.IExpressionEvaluator;
 import org.emoflon.ibex.gt.viatra.runtime.IBeXToViatraPatternTransformation;
-
-import IBeXLanguage.IBeXAttributeExpression;
-import IBeXLanguage.IBeXAttributeValue;
-import IBeXLanguage.IBeXCSP;
-import IBeXLanguage.IBeXContextPattern;
-import IBeXLanguage.IBeXNode;
+import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXAttributeExpression;
+import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXAttributeValue;
+import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXCSP;
+import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXContextPattern;
+import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXNode;
 
 @SuppressWarnings("restriction")
 public class TGGIBeXToViatraPatternTransformation extends IBeXToViatraPatternTransformation {

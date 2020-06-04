@@ -6,12 +6,11 @@ import org.eclipse.viatra.query.runtime.matchers.psystem.IExpressionEvaluator;
 import org.eclipse.viatra.query.runtime.matchers.psystem.IValueProvider;
 import org.eclipse.xtext.xbase.lib.Pure;
 import org.emoflon.ibex.gt.viatra.runtime.IExpressionEvaluatorBuilder;
+import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXAttributeExpression;
+import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXAttributeValue;
+import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXCSP;
+import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXConstant;
 import org.emoflon.ibex.tgg.operational.csp.RuntimeTGGAttributeConstraintVariable;
-
-import IBeXLanguage.IBeXAttributeExpression;
-import IBeXLanguage.IBeXAttributeValue;
-import IBeXLanguage.IBeXCSP;
-import IBeXLanguage.IBeXConstant;
 
 public class CSPIExpressionEvaluatorBuilder extends IExpressionEvaluatorBuilder {
 	

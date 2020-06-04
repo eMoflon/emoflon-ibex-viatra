@@ -2,6 +2,7 @@ package org.emoflon.ibex.tgg.runtime.viatra;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -15,6 +16,7 @@ import org.emoflon.ibex.common.operational.IMatch;
 import org.emoflon.ibex.common.operational.IMatchObserver;
 import org.emoflon.ibex.gt.viatra.runtime.IBeXToViatraPatternTransformation;
 import org.emoflon.ibex.gt.viatra.runtime.ViatraGTEngine;
+import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXPatternSet;
 import org.emoflon.ibex.tgg.compiler.transformations.patterns.ContextPatternTransformation;
 import org.emoflon.ibex.tgg.operational.IBlackInterpreter;
 import org.emoflon.ibex.tgg.operational.defaults.IbexOptions;
@@ -22,12 +24,10 @@ import org.emoflon.ibex.tgg.operational.strategies.modules.IbexExecutable;
 import org.emoflon.ibex.tgg.operational.strategies.modules.MatchDistributor;
 import org.emoflon.ibex.tgg.operational.strategies.sync.SYNC;
 
-import IBeXLanguage.IBeXPatternSet;
-
 public class ViatraTGGEngine extends ViatraGTEngine implements IBlackInterpreter {
 	
 	
-	private ArrayList<IMatch> notifyMatches;
+	private LinkedList<IMatch> notifyMatches;
 	/**
 	 * Creates a new ViatraTGGEngine.
 	 */
@@ -83,12 +83,11 @@ public class ViatraTGGEngine extends ViatraGTEngine implements IBlackInterpreter
 	@Override
 	protected void setMatchers() {
 		matchers = new ArrayList<ViatraQueryMatcher<?>>();
-		notifyMatches = new ArrayList<IMatch>();
+		notifyMatches = new LinkedList<IMatch>();
 
 		specifications.forEach(spec -> {
 			matchers.add(engine.getMatcher(spec));
 		});
-		System.out.println("SetMatchers");
 		for(ViatraQueryMatcher<?> matcher : matchers) {
 			//to get a notification when a IPatternMatch appearance i.e. disappearance ever matcher needs a IMatchUpdateListener
 			//this listener will then add i.e. remove a iMatch from the IMatchObserver
@@ -97,7 +96,6 @@ public class ViatraTGGEngine extends ViatraGTEngine implements IBlackInterpreter
 				@Override
 				public void notifyDisappearance(IPatternMatch match) {
 					IMatch iMatch = createMatch(match);
-//					System.out.println("Match DIS: " +  iMatch);
 					if(executable instanceof SYNC) {
 						if(iMatch instanceof ViatraTGGMatch)
 							((ViatraTGGMatch) iMatch).setDisapperance(true);
@@ -105,13 +103,11 @@ public class ViatraTGGEngine extends ViatraGTEngine implements IBlackInterpreter
 					}
 					else 
 						app.removeMatch(iMatch);
-					System.out.println("DIS");
 				}
 				
 				@Override
 				public void notifyAppearance(IPatternMatch match) {
 					IMatch iMatch = createMatch(match);
-//					System.out.println("Match APP: " +  iMatch);
 					if(executable instanceof SYNC) {
 						if(iMatch instanceof ViatraTGGMatch)
 							((ViatraTGGMatch) iMatch).setDisapperance(false);
@@ -119,7 +115,6 @@ public class ViatraTGGEngine extends ViatraGTEngine implements IBlackInterpreter
 					}
 					else 
 						app.addMatch(iMatch);
-					System.out.println("APP");
 				}
 			};
 			engine.addMatchUpdateListener(matcher, listener, true);
@@ -128,33 +123,30 @@ public class ViatraTGGEngine extends ViatraGTEngine implements IBlackInterpreter
 	
 	@Override
 	public void updateMatches() {
-		System.out.println("UpdateMatches");
 		//to trigger the IMatchUpdateListener every matcher needs to be called
 		if(!(executable instanceof SYNC))
 		for(ViatraQueryMatcher<?> matcher : matchers) {
-			matcher.getAllMatches();
+			matcher.countMatches();
 		}
 		
 		for(IMatch match : notifyMatches) {
 			if(match instanceof ViatraTGGMatch) {
 				if(((ViatraTGGMatch) match).getDisapperance()) {
 					app.removeMatch(match);
-					System.out.println("Match DIS: " +  match);
 				}
 				else {
 					app.addMatch(match);
-					System.out.println("Match APP: " +  match);
 				}
 			}
 		}
 		notifyMatches.clear();
 		app.notifySubscriptions();
 	}
+	
 	@Override
 	public void terminate() {
 		if(executable instanceof SYNC)
 			updateMatches();
-		Logger.getRootLogger().setLevel(Level.ALL);
 		engine.wipe();
 		engine.dispose();
 	}
