@@ -114,7 +114,7 @@ public class ViatraGTEngine implements IContextPatternInterpreter {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void monitor(final ResourceSet resourceSet) {
+	public void monitor(final Collection<Resource> resources) {
 		for (Resource r : resourceSet.getResources()) {
 			if ("ecore".equals(r.getURI().fileExtension())) {
 				logger.warn("Are you sure your resourceSet should contain a resource for a metamodel?: " + r.getURI());
@@ -149,7 +149,9 @@ public class ViatraGTEngine implements IContextPatternInterpreter {
 				});
 		try {	
 			BaseIndexOptions options = new BaseIndexOptions().withDanglingFreeAssumption(false).withDynamicEMFMode(true);
-			engine = AdvancedViatraQueryEngine.createUnmanagedEngine(new EMFScope(resourceSet, options));
+			resources.forEach(r -> {
+				engine = AdvancedViatraQueryEngine.createUnmanagedEngine(new EMFScope(r, options));
+			});
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
