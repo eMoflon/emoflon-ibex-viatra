@@ -16,9 +16,9 @@ public class ViatraGTMatch extends SimpleMatch {
 	public ViatraGTMatch(final IPatternMatch match) {
 		super(match.patternName());
 		List<String> params = null;
-		if (match.patternName() != null)
+		if (match.patternName() != null && TGGMatchParameterOrderProvider.isInitialized())
 			params = TGGMatchParameterOrderProvider.getParams(PatternSuffixes.removeSuffix(match.patternName()));
-		if (params != null) {
+		if (params != null && TGGMatchParameterOrderProvider.isInitialized()) {
 			// Insert parameters in a predefined order for determined match hashing
 			for (String p : params) {
 				Object v = match.get(p);
