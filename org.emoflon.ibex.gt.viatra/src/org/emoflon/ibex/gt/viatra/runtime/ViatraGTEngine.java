@@ -7,8 +7,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
+import org.eclipse.emf.common.notify.Notifier;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.EPackage.Registry;
@@ -149,9 +151,8 @@ public class ViatraGTEngine implements IContextPatternInterpreter {
 				});
 		try {	
 			BaseIndexOptions options = new BaseIndexOptions().withDanglingFreeAssumption(false).withDynamicEMFMode(true);
-			resources.forEach(r -> {
-				engine = AdvancedViatraQueryEngine.createUnmanagedEngine(new EMFScope(r, options));
-			});
+			Set<Notifier> notifier = resources.stream().filter(res -> !res.getURI().toString().contains("-trash")).map(res -> (Notifier)res).collect(Collectors.toSet());
+			engine = AdvancedViatraQueryEngine.createUnmanagedEngine(new EMFScope(notifier, options));
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
