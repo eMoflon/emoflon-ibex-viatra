@@ -42,6 +42,8 @@ public class ViatraGTMatch extends SimpleMatch {
 				if (v != null)
 					put(p, v);
 			}
+		} else {
+			init(match);
 		}
 	}
 }
