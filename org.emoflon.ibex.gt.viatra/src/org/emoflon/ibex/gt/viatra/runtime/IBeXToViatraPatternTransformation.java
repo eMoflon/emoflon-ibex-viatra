@@ -236,7 +236,7 @@ public class IBeXToViatraPatternTransformation{
 	 * 
 	 * @param invocations List with IBeXPatternInvocation
 	 */
-	protected void iBeXInvocationsToViatraPatternCall(EList<IBeXPatternInvocation>  invocations) {
+	protected void iBeXInvocationsToViatraPatternCall(EList<IBeXPatternInvocation>  invocations, IBeXContextPattern patternToTransform) {
 		invocations.forEach(invoc -> {
 			if(!viatraPatterns.containsKey(invoc.getInvokedPattern().getName()))
 				try {
@@ -257,17 +257,48 @@ public class IBeXToViatraPatternTransformation{
 			
 
 			pCall.setPatternRef(patternReference);
+			
+			//In Viatra a patternCall (PatternInvocation) acts like a method call
+			//Therefore it is important that the order of parameters is correct
 			patternReference.getParameters().forEach(para -> {
-				ValueReference ref = createVariableReference(para.getName(), para);
-				pCall.getParameters().add(ref);
-				Parameter locPar = createParameter(para.getName(), createClassType(para.getType().getTypename(), ((ClassType) para.getType()).getClassname()), ParameterDirection.get(0));
-				parameters.add(locPar);
-				ParameterRef parRef = PatternLanguageFactory.eINSTANCE.createParameterRef();
-				parRef.setReferredParam(locPar);
-				parRef.setName(locPar.getName());
-				parRef.setType(createClassType(para.getType().getTypename(), ((ClassType) para.getType()).getClassname()));
-				body.getVariables().add(parRef);
+				String paraName = para.getName();
+				//iterate throw all entry's of node mapping to find the node of the called IBeX-pattern that equals the parameter of the called Viatra-Pattern
+				for(Map.Entry<IBeXNode, IBeXNode> nodeEntry : invoc.getMapping()) {
+					if(nodeEntry.getValue().getName().contentEquals(paraName)) {
+						boolean callerNodeisLocal = false;
+						String callerNodeName = nodeEntry.getKey().getName();
+						//check if the node is a local node so that just a variable will be created
+						for(IBeXNode localN : patternToTransform.getLocalNodes()) {
+							if(localN.getName() == callerNodeName);
+								callerNodeisLocal = true;
+						}
+						if(callerNodeisLocal) {
+							LocalVariable locVar = createLocalVariable(callerNodeName, createClassType(para.getType().getTypename(), ((ClassType) para.getType()).getClassname()));
+							PathExpressionConstraint pathExp = PatternLanguageFactory.eINSTANCE.createPathExpressionConstraint();
+							pathExp.setDst(createVariableReference(callerNodeName, locVar));
+							pathExp.setSourceType(createClassType(para.getType().getTypename(), ((ClassType) para.getType()).getClassname()));
+							pathExp.setSrc(createVariableReference(callerNodeName, locVar));
+							ValueReference ref = createVariableReference(callerNodeName, locVar);
+							pCall.getParameters().add(ref);
+							body.getConstraints().add(pathExp);
+							body.getVariables().add(locVar);
+						}
+						else {
+							Parameter locPar = createParameter(callerNodeName, createClassType(para.getType().getTypename(), ((ClassType) para.getType()).getClassname()), ParameterDirection.get(0));
+							parameters.add(locPar);
+							ParameterRef parRef = PatternLanguageFactory.eINSTANCE.createParameterRef();
+							parRef.setReferredParam(locPar);
+							parRef.setName(locPar.getName());
+							parRef.setType(createClassType(para.getType().getTypename(), ((ClassType) para.getType()).getClassname()));
+							body.getVariables().add(parRef);
+							ValueReference ref = createVariableReference(callerNodeName, locPar);
+							pCall.getParameters().add(ref);
+							break;
+						}
+					}
+				}
 			});
+			
 			if(!invoc.isPositive()) {
 				pCompConstr.setNegative(true);
 			}
@@ -536,7 +567,7 @@ public class IBeXToViatraPatternTransformation{
 			allNodes.put(x, false);
 		});
 		if(!pattern.getInvocations().isEmpty()){
-			iBeXInvocationsToViatraPatternCall(pattern.getInvocations());
+			iBeXInvocationsToViatraPatternCall(pattern.getInvocations(), pattern);
 		}
 		expressions.addAll(IBeXConstraintToViatraConstraint(pattern.getAttributeConstraint()));
 		

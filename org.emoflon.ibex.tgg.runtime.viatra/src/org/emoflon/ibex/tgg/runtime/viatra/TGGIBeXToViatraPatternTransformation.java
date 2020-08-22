@@ -81,11 +81,10 @@ public class TGGIBeXToViatraPatternTransformation extends IBeXToViatraPatternTra
 		EClass nodeType;
 		pattern.getSignatureNodes().forEach(x -> allNodes.put(x, true));
 		pattern.getLocalNodes().forEach(x -> {
-			x.setName("LOCAL" + x.getName());
 			allNodes.put(x, false);
 		});
 		if(!pattern.getInvocations().isEmpty()){
-			iBeXInvocationsToViatraPatternCall(pattern.getInvocations());
+			iBeXInvocationsToViatraPatternCall(pattern.getInvocations(), pattern);
 		}
 		expressions.addAll(IBeXConstraintToViatraConstraint(pattern.getAttributeConstraint()));
 		
