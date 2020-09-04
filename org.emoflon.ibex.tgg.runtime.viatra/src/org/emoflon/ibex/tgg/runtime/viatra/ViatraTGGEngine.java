@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EPackage.Registry;
 import org.eclipse.emf.ecore.resource.Resource;
@@ -16,6 +14,7 @@ import org.emoflon.ibex.common.operational.IMatch;
 import org.emoflon.ibex.common.operational.IMatchObserver;
 import org.emoflon.ibex.gt.viatra.runtime.IBeXToViatraPatternTransformation;
 import org.emoflon.ibex.gt.viatra.runtime.ViatraGTEngine;
+import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXModel;
 import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXPatternSet;
 import org.emoflon.ibex.tgg.compiler.transformations.patterns.ContextPatternTransformation;
 import org.emoflon.ibex.tgg.operational.IBlackInterpreter;
@@ -55,7 +54,8 @@ public class ViatraTGGEngine extends ViatraGTEngine implements IBlackInterpreter
 		this.options = options;
 		this.executable = executable;
 		ContextPatternTransformation compiler = new ContextPatternTransformation(options, (MatchDistributor) matchObserver);
-		ibexPatterns = compiler.transform();
+		IBeXModel ibexModel = compiler.transform();
+		ibexPatterns = ibexModel.getPatternSet();
 		initPatterns(ibexPatterns);
 	}
 	

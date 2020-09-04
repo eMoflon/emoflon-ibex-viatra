@@ -64,8 +64,8 @@ import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXContextAlternatives;
 import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXContextPattern;
 import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXEdge;
 import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXEnumLiteral;
+import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXInjectivityConstraint;
 import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXNode;
-import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXNodePair;
 import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXPatternInvocation;
 import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXPatternSet;
 
@@ -528,10 +528,10 @@ public class IBeXToViatraPatternTransformation{
 		}
 	}
 	
-	protected List<Constraint> iBeXInjectiveConstraintToViatra(EList<IBeXNodePair> pairs) {
+	protected List<Constraint> iBeXInjectiveConstraintToViatra(EList<IBeXInjectivityConstraint> pairs) {
 		ArrayList<Constraint> ret = new ArrayList<Constraint>();
 		//Iteration through all NodePairs and create CompareConstraint for all possible combinations (no duplicates)
-		for(IBeXNodePair pair : pairs) {
+		for(IBeXInjectivityConstraint pair : pairs) {
 			for(int i = 0; i < pair.getValues().size(); i++) {
 				for(int j = i+1; j < pair.getValues().size() ; j++) {
 					IBeXNode tempLeft = pair.getValues().get(i);

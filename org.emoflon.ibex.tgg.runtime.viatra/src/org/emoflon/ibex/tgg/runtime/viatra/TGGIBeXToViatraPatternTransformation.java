@@ -34,7 +34,6 @@ public class TGGIBeXToViatraPatternTransformation extends IBeXToViatraPatternTra
 		super(builder);
 	}
 
-	@SuppressWarnings("restriction")
 	private List<IExpressionEvaluator> iBeXCSPToViatra(EList<IBeXCSP> csps) {
 		List<IExpressionEvaluator> cspExpressions = new ArrayList<IExpressionEvaluator>();
 		int i = 0;
@@ -65,7 +64,6 @@ public class TGGIBeXToViatraPatternTransformation extends IBeXToViatraPatternTra
 		return cspExpressions;
 	}
 	
-	@SuppressWarnings("restriction")
 	@Override
 	public Pattern iBexPatternToViatraPattern(IBeXContextPattern pattern) throws Exception {
 		if(viatraPatterns.containsKey(pattern.getName())) {
