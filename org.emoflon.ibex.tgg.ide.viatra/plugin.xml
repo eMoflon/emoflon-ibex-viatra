@@ -8,11 +8,5 @@
             class="org.emoflon.ibex.tgg.compiler.viatra.defaults.IbexViatraBuilderExtension">
       </builder_extension>
    </extension>
-   <extension
-         point="org.emoflon.ibex.tgg.ide.IbexTGGNatureExtension">
-      <nature_extension
-            class="org.emoflon.ibex.tgg.compiler.viatra.defaults.IbexViatraNatureExtension">
-      </nature_extension>
-   </extension>
 
 </plugin>
