@@ -2,9 +2,8 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension
-         point="org.emoflon.ibex.tgg.ide.IbexTGGBuilderExtension">
+         point="org.emoflon.ibex.tgg.language.TGGEngineBuilderExtension">
       <builder_extension
-            build_before_all="false"
             class="org.emoflon.ibex.tgg.compiler.viatra.defaults.IbexViatraBuilderExtension">
       </builder_extension>
    </extension>

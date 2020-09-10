@@ -1,10 +1,8 @@
 package org.emoflon.ibex.tgg.compiler.viatra.defaults
  
-import java.util.Collection
-import language.TGGAttributeConstraintDefinition
 import org.moflon.core.utilities.MoflonUtil
 import org.moflon.tgg.mosl.tgg.TripleGraphGrammarFile
-import org.emoflon.ibex.tgg.compiler.defaults.DefaultFilesGenerator
+import org.emoflon.ibex.tgg.codegen.DefaultFilesGenerator
 
 class ViatraFilesGenerator extends DefaultFilesGenerator {
 
