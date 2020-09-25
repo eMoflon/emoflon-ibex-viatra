@@ -8,48 +8,49 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.emoflon.ibex.common.project.ManifestHelper;
-import org.emoflon.ibex.tgg.ide.admin.BuilderExtension;
+import org.emoflon.ibex.tgg.codegen.TGGEngineBuilderExtension;
 import org.emoflon.ibex.tgg.ide.admin.IbexTGGBuilder;
 import org.moflon.core.plugins.manifest.ManifestFileUpdater;
 import org.moflon.core.utilities.LogUtils;
 import org.moflon.tgg.mosl.tgg.TripleGraphGrammarFile;
 
-public class IbexViatraBuilderExtension implements BuilderExtension {
+public class IbexViatraBuilderExtension implements TGGEngineBuilderExtension {
 
 	private Logger logger = Logger.getLogger(IbexViatraBuilderExtension.class);
 	
 	@Override
-	public void run(IbexTGGBuilder builder, TripleGraphGrammarFile editorModel, TripleGraphGrammarFile flattenedEditorModel) {
+	public void run(IProject project, TripleGraphGrammarFile editorModel, TripleGraphGrammarFile flattenedEditorModel) {
+		updateManifest(project);
+		
 		try {
-			builder.createDefaultDebugRunFile("MODELGEN_Debug_App", (projectName, fileName) 
+			IbexTGGBuilder.createDefaultDebugRunFile(project, "MODELGEN_Debug_App", (projectName, fileName) 
 				-> ViatraFilesGenerator.generateModelGenDebugFile(projectName, fileName));
-			builder.createDefaultRunFile("MODELGEN_App", (projectName, fileName) 
+			IbexTGGBuilder.createDefaultRunFile(project, "MODELGEN_App", (projectName, fileName) 
 					-> ViatraFilesGenerator.generateModelGenFile(projectName, fileName));
-			builder.createDefaultRunFile("SYNC_App", (projectName, fileName) 
+			IbexTGGBuilder.createDefaultRunFile(project, "SYNC_App", (projectName, fileName) 
 					-> ViatraFilesGenerator.generateSyncAppFile(projectName, fileName));
-			builder.createDefaultRunFile("INITIAL_FWD_App", (projectName, fileName) 
+			IbexTGGBuilder.createDefaultRunFile(project, "INITIAL_FWD_App", (projectName, fileName) 
 				-> ViatraFilesGenerator.generateInitialFwdAppFile(projectName, fileName));
-			builder.createDefaultRunFile("INITIAL_BWD_App", (projectName, fileName) 
+			IbexTGGBuilder.createDefaultRunFile(project, "INITIAL_BWD_App", (projectName, fileName) 
 				-> ViatraFilesGenerator.generateInitialBwdAppFile(projectName, fileName));
-			builder.createDefaultRunFile("CC_App", (projectName, fileName) 
+			IbexTGGBuilder.createDefaultRunFile(project, "CC_App", (projectName, fileName) 
 					-> ViatraFilesGenerator.generateCCAppFile(projectName, fileName));
-			builder.createDefaultRunFile("CO_App", (projectName, fileName) 
+			IbexTGGBuilder.createDefaultRunFile(project, "CO_App", (projectName, fileName) 
 					-> ViatraFilesGenerator.generateCOAppFile(projectName, fileName));
-			builder.createDefaultRunFile("FWD_OPT_App", (projectName, fileName) 
+			IbexTGGBuilder.createDefaultRunFile(project, "FWD_OPT_App", (projectName, fileName) 
 					-> ViatraFilesGenerator.generateFWDOptAppFile(projectName, fileName));
-			builder.createDefaultRunFile("BWD_OPT_App", (projectName, fileName) 
+			IbexTGGBuilder.createDefaultRunFile(project, "BWD_OPT_App", (projectName, fileName) 
 					-> ViatraFilesGenerator.generateBWDOptAppFile(projectName, fileName));
-			builder.createDefaultRunFile("INTEGRATE_App", (projectName, fileName) 
+			IbexTGGBuilder.createDefaultRunFile(project, "INTEGRATE_App", (projectName, fileName) 
 					-> ViatraFilesGenerator.generateIntegrateAppFile(projectName, fileName));
-			builder.createDefaultConfigFile("_DefaultRegistrationHelper", (projectName, fileName) 
+			IbexTGGBuilder.createDefaultConfigFile(project, "_DefaultRegistrationHelper", (projectName, fileName) 
 					-> ViatraFilesGenerator.generateDefaultRegHelperFile(projectName));
-			builder.createDefaultConfigFile("ViatraRegistrationHelper", (projectName, fileName)
+			IbexTGGBuilder.createDefaultConfigFile(project, "ViatraRegistrationHelper", (projectName, fileName)
 					-> ViatraFilesGenerator.generateRegHelperFile(projectName, editorModel));
 		} catch (CoreException e) {
 			LogUtils.error(logger, e);
 		}
 		
-		updateManifest(builder.getProject());
 	}
 	
 	private void updateManifest(IProject project) {
@@ -69,4 +70,6 @@ public class IbexViatraBuilderExtension implements BuilderExtension {
 			LogUtils.error(logger, "Failed to update MANIFEST.MF \n"+e.getMessage());
 		}
 	}
+
+	
 }
