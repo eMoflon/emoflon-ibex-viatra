@@ -319,193 +319,187 @@ public class IBeXToViatraPatternTransformation{
 	}
 	
 	protected ArrayList<IExpressionEvaluator> IBeXConstraintToViatraConstraint(EList<IBeXAttributeConstraint> constraints) {
-		ArrayList<String> pathExpressions = new ArrayList<String>();
-		ArrayList<IExpressionEvaluator> iExpressions = new ArrayList<IExpressionEvaluator>();
-		IBeXAttributeValue attValue;
-		EClass nodeType_Constr;
-		String nodeName_Constr;
-		String pathExpression;
-		int i = 0;
-		for(IBeXAttributeConstraint ibexConstr : constraints) {
-			nodeType_Constr = (EClass) ibexConstr.getNode().getType();
-			nodeName_Constr = ibexConstr.getNode().getName();
-			attValue = ibexConstr.getValue();
-			ClassType type_Constr = createClassType(nodeType_Constr.getName(), nodeType_Constr);
-			Variable var_Constr = createLocalVariable(nodeName_Constr, type_Constr);
-			VariableReference varRef_Constr = createVariableReference(nodeName_Constr, var_Constr);
-			String individualVarName;
-			String varName = "var_" + i;
-			if(attValue instanceof IBeXAttributeExpression) {
-				IBeXAttributeExpression exp = (IBeXAttributeExpression) attValue;
-				EAttribute eAttValue = exp.getAttribute();
-				boolean checkConstrNeeded = true;
-				String literal = ibexConstr.getRelation().getLiteral();
-				if(literal == "EQUAL" || literal == "UNEQUAL")
-					checkConstrNeeded = false;
-			
-				nodeType_Constr = (EClass) ibexConstr.getNode().getType();
-				nodeName_Constr = ibexConstr.getNode().getName();
-				String nodeName_Exp = exp.getNode().getName();
-				EClass nodeType_Exp = exp.getNode().getType();
-				
-				PathExpressionConstraint pathExpCONSTR = PatternLanguageFactory.eINSTANCE.createPathExpressionConstraint();
-				PathExpressionConstraint pathExpEXP = PatternLanguageFactory.eINSTANCE.createPathExpressionConstraint();
-				
-				ReferenceType refType_PathExpConstr = createReferenceType(nodeType_Constr.getName(), ibexConstr.getType());
-//				ReferenceType refType_PathExpEXP = createReferenceType(nodeType_Exp.getName(), ibexConstr.getType());
-				ReferenceType refType_PathExpEXP = createReferenceType(eAttValue.getName(), eAttValue);
-				Variable var_PathExpEXP = createLocalVariable(nodeName_Exp, createClassType(nodeType_Exp.getName(), nodeType_Exp));
-				LocalVariable locVarDst_PathExpConstr;
-				LocalVariable locVarDst_PathExpEXP;
-				if(checkConstrNeeded) {
-					individualVarName = nodeName_Constr + "_" + i;
-					locVarDst_PathExpConstr = createLocalVariable(individualVarName, createReferenceType(nodeType_Constr.getName(), ibexConstr.getType()));
-					pathExpCONSTR.setDst(createVariableReference(individualVarName, locVarDst_PathExpConstr));
-					
-					individualVarName = nodeName_Exp + "_" + i;
-//					locVarDst_PathExpEXP = createLocalVariable(individualVarName, createReferenceType(nodeType_Exp.getName(), ibexConstr.getType()));
-					locVarDst_PathExpEXP = createLocalVariable(individualVarName, createReferenceType(eAttValue.getName(), eAttValue));
-					pathExpEXP.setDst(createVariableReference(individualVarName, locVarDst_PathExpEXP));
-				}
-				else {
-					locVarDst_PathExpConstr = createLocalVariable(varName, createReferenceType(nodeType_Constr.getName(), ibexConstr.getType()));
-					pathExpCONSTR.setDst(createVariableReference(varName, locVarDst_PathExpConstr));
-					
-//					locVarDst_PathExpEXP = createLocalVariable("s", createReferenceType(nodeType_Exp.getName(), ibexConstr.getType()));
-					locVarDst_PathExpEXP = createLocalVariable(varName, createReferenceType(eAttValue.getName(), eAttValue));
-					pathExpEXP.setDst(createVariableReference(varName, locVarDst_PathExpEXP));
-				}
-				pathExpCONSTR.getEdgeTypes().add(refType_PathExpConstr);
-				pathExpCONSTR.setSourceType(createClassType(nodeName_Constr, nodeType_Constr));
-				pathExpCONSTR.setSrc(createVariableReference(nodeName_Constr, var_Constr));
-				
-				pathExpEXP.getEdgeTypes().add(refType_PathExpEXP);
-				pathExpEXP.setSourceType(createClassType(nodeName_Exp, nodeType_Exp));
-				pathExpEXP.setSrc(createVariableReference(nodeName_Exp, var_PathExpEXP));
-				
-				pathExpression = pathExpCONSTR.toString();
-				pathExpressions.add(pathExpression);
-				pathExpression = pathExpEXP.toString();
-				pathExpressions.add(pathExpression);
-				
-				ClassType typ = createClassType(nodeType_Constr.getName(), nodeType_Constr);
-				ValueReference leftOp = createVariableReference(nodeName_Constr, createParameter(nodeName_Constr, typ, ParameterDirection.get(0)));
-				ValueReference rightOp = createVariableReference(nodeName_Exp, 
-						createParameter(nodeName_Exp, 
-								createClassType(nodeName_Exp, nodeType_Exp), ParameterDirection.get(0)));
-				CompareConstraint constr = createCompareConstraint(CompareFeature.get(1), leftOp, rightOp);
-				
-				switch(literal) {
-				case "UNEQUAL":
-					constr.setFeature(CompareFeature.get(0));
-					body.getConstraints().add(constr);
-					break;
-				case "EQUAL":
-					body.getConstraints().add(constr);
-					break;
-				case "SMALLER" :
-					iExpressions.add(expressionEvaluatorBuilder(ibexConstr.getType().getEType().getInstanceClass(), new String[] {locVarDst_PathExpConstr.getName(), locVarDst_PathExpEXP.getName()} , null, FunctionType.PARAMETER_ONLY, Operator.SMALLER));
-					break;
-				case "SMALLER_OR_EQUAL" :
-					iExpressions.add(expressionEvaluatorBuilder(ibexConstr.getType().getEType().getInstanceClass(), new String[] {locVarDst_PathExpConstr.getName(), locVarDst_PathExpEXP.getName()} , null, FunctionType.PARAMETER_ONLY, Operator.SMALLER_OR_EQUAL));
-					break;
-				case "GREATER" :
-					iExpressions.add(expressionEvaluatorBuilder(ibexConstr.getType().getEType().getInstanceClass(), new String[] {locVarDst_PathExpConstr.getName(), locVarDst_PathExpEXP.getName()} , null, FunctionType.PARAMETER_ONLY, Operator.GREATER));
-					break;
-				case "GREATER_OR_EQUAL" :
-					iExpressions.add(expressionEvaluatorBuilder(ibexConstr.getType().getEType().getInstanceClass(), new String[] {locVarDst_PathExpConstr.getName(), locVarDst_PathExpEXP.getName()} , null, FunctionType.PARAMETER_ONLY, Operator.GREATER_OR_EQUAL));
-					break;
-				}
-				body.getConstraints().add(pathExpCONSTR);
-				
-				if(allNodes.get(ibexConstr.getNode())) {
-					Parameter par_Constr = createParameter(nodeName_Constr, createClassType(nodeType_Constr.getName(), nodeType_Constr), ParameterDirection.get(0));
-					parameters.add(par_Constr);
-					var_Constr = (ParameterRef) PatternLanguageFactory.eINSTANCE.createParameterRef();
-					((ParameterRef) var_Constr).setReferredParam(par_Constr);
-					var_Constr.setName(nodeName_Constr);
-					var_Constr.setType(createClassType(nodeType_Constr.getName(), nodeType_Constr));
-				}
-				if(allNodes.containsKey(exp.getNode()) && allNodes.get(exp.getNode())) {
-					Parameter par_Exp = createParameter(nodeName_Exp, createClassType(nodeType_Exp.getName(), nodeType_Exp), ParameterDirection.get(0));
-					parameters.add(par_Exp);
-					var_PathExpEXP = (ParameterRef) PatternLanguageFactory.eINSTANCE.createParameterRef();
-					((ParameterRef) var_PathExpEXP).setReferredParam(par_Exp);
-					var_PathExpEXP.setName(nodeName_Exp);
-					var_PathExpEXP.setType(createClassType(nodeType_Exp.getName(), nodeType_Exp));
-				}
-				body.getVariables().add(var_Constr);
-				body.getVariables().add(locVarDst_PathExpConstr);
-				body.getVariables().add(var_PathExpEXP);
-				body.getVariables().add(locVarDst_PathExpEXP);
-				if(allNodes.containsKey(exp.getNode())) {
-					body.getConstraints().add(pathExpEXP);
-				}
-			}
-			else if(attValue instanceof IBeXConstant) {
-			IBeXConstant con = (IBeXConstant) attValue;
-			PathExpressionConstraint pathExp = PatternLanguageFactory.eINSTANCE.createPathExpressionConstraint();
-			ReferenceType refType = createReferenceType(nodeType_Constr.getName(), ibexConstr.getType());
-			LocalVariable locVarDst = createLocalVariable(varName, refType);
-			
-			pathExp.setDst(createVariableReference(varName, locVarDst));
-			pathExp.getEdgeTypes().add(createReferenceType(ibexConstr.getType().getName(), ibexConstr.getType()));
-			pathExp.setSourceType(createClassType(nodeName_Constr, nodeType_Constr));
-			pathExp.setSrc(varRef_Constr);
-			pathExpressions.add(pathExp.toString());
-			
-			switch(ibexConstr.getRelation().getLiteral()) {
-			case "EQUAL" :
-				pathExp.setDst(createLiteralValueReference(con.getValue()));
-				break;
-			case "UNEQUAL" :
-				iExpressions.add(expressionEvaluatorBuilder(ibexConstr.getType().getEType().getInstanceClass(), new String[] {varName}, new Object[] {con.getValue()}, FunctionType.PARAMETER_AND_VALUE, Operator.UNEQUAL));
-				break;
-			case "SMALLER" :
-				iExpressions.add(expressionEvaluatorBuilder(ibexConstr.getType().getEType().getInstanceClass(), new String[] {varName}, new Object[] {con.getValue()}, FunctionType.PARAMETER_AND_VALUE, Operator.SMALLER));
-				break;
-			case "SMALLER_OR_EQUAL" :
-				iExpressions.add(expressionEvaluatorBuilder(ibexConstr.getType().getEType().getInstanceClass(), new String[] {varName}, new Object[] {con.getValue()}, FunctionType.PARAMETER_AND_VALUE, Operator.SMALLER_OR_EQUAL));
-				break;
-			case "GREATER_OR_EQUAL" :
-				iExpressions.add(expressionEvaluatorBuilder(ibexConstr.getType().getEType().getInstanceClass(), new String[] {varName}, new Object[] {con.getValue()}, FunctionType.PARAMETER_AND_VALUE, Operator.GREATER_OR_EQUAL));
-				break;
-			case "GREATER" :
-				iExpressions.add(expressionEvaluatorBuilder(ibexConstr.getType().getEType().getInstanceClass(), new String[] {varName}, new Object[] {con.getValue()}, FunctionType.PARAMETER_AND_VALUE, Operator.GREATER));
-				break;
-			}
-			if(allNodes.get(ibexConstr.getNode())) {
-				Parameter par_Constr = createParameter(nodeName_Constr, createClassType(nodeType_Constr.getName(), nodeType_Constr), ParameterDirection.get(0));
-				parameters.add(par_Constr);
-				var_Constr = (ParameterRef) PatternLanguageFactory.eINSTANCE.createParameterRef();
-				((ParameterRef) var_Constr).setReferredParam(par_Constr);
-				var_Constr.setName(nodeName_Constr);
-				var_Constr.setType(createClassType(nodeType_Constr.getName(), nodeType_Constr));
-			}
-			body.getConstraints().add(pathExp);
-			body.getVariables().add(locVarDst);
-			body.getVariables().add(var_Constr);
-			}
-			
-			else if(attValue instanceof IBeXAttributeParameter) {
-			body.getVariables().add(var_Constr);	
-			}
-			
-			else if(attValue instanceof IBeXEnumLiteral) {
-				EEnumLiteral enumLiteral = ((IBeXEnumLiteral) attValue).getLiteral();
-				PathExpressionConstraint pathExp = PatternLanguageFactory.eINSTANCE.createPathExpressionConstraint();
-				EnumValue eValue = PatternLanguageFactory.eINSTANCE.createEnumValue();
-				eValue.setLiteral(enumLiteral);
-				eValue.setEnumeration(enumLiteral.getEEnum());
-				pathExp.setSourceType(createClassType(nodeName_Constr, nodeType_Constr));
-				pathExp.setSrc(varRef_Constr);
-				pathExp.setDst(eValue);
-				pathExp.getEdgeTypes().add(createReferenceType(ibexConstr.getType().getName(), ibexConstr.getType()));
-				body.getConstraints().add(pathExp);
-				}
-			i++;
-		}
-		return iExpressions;
+		return null;
+		//TODO: Fix
+//		ArrayList<String> pathExpressions = new ArrayList<String>();
+//		ArrayList<IExpressionEvaluator> iExpressions = new ArrayList<IExpressionEvaluator>();
+//		IBeXAttributeValue lhsValue;
+//		IBeXAttributeValue rhsValue;
+//		String pathExpression;
+//		int i = 0;
+//		for(IBeXAttributeConstraint ibexConstr : constraints) {
+//			lhsValue = ibexConstr.getLhs();
+//			rhsValue = ibexConstr.getRhs();
+//			String individualVarName;
+//			String varName = "var_" + i;
+//			if(rhsValue instanceof IBeXAttributeExpression) {
+//				IBeXAttributeExpression exp = (IBeXAttributeExpression) rhsValue;
+//				EAttribute eAttValue = exp.getAttribute();
+//				boolean checkConstrNeeded = true;
+//				String literal = ibexConstr.getRelation().getLiteral();
+//				if(literal == "EQUAL" || literal == "UNEQUAL")
+//					checkConstrNeeded = false;
+//	
+//				String nodeName_Exp = exp.getNode().getName();
+//				EClass nodeType_Exp = exp.getNode().getType();
+//				
+//				PathExpressionConstraint pathExpCONSTR = PatternLanguageFactory.eINSTANCE.createPathExpressionConstraint();
+//				PathExpressionConstraint pathExpEXP = PatternLanguageFactory.eINSTANCE.createPathExpressionConstraint();
+//				
+//				ReferenceType refType_PathExpConstr = createReferenceType(nodeType_Constr.getName(), ibexConstr.getType());
+//				ReferenceType refType_PathExpEXP = createReferenceType(eAttValue.getName(), eAttValue);
+//				Variable var_PathExpEXP = createLocalVariable(nodeName_Exp, createClassType(nodeType_Exp.getName(), nodeType_Exp));
+//				LocalVariable locVarDst_PathExpConstr;
+//				LocalVariable locVarDst_PathExpEXP;
+//				if(checkConstrNeeded) {
+//					individualVarName = nodeName_Constr + "_" + i;
+//					locVarDst_PathExpConstr = createLocalVariable(individualVarName, createReferenceType(nodeType_Constr.getName(), ibexConstr.getType()));
+//					pathExpCONSTR.setDst(createVariableReference(individualVarName, locVarDst_PathExpConstr));
+//					
+//					individualVarName = nodeName_Exp + "_" + i;
+////					locVarDst_PathExpEXP = createLocalVariable(individualVarName, createReferenceType(nodeType_Exp.getName(), ibexConstr.getType()));
+//					locVarDst_PathExpEXP = createLocalVariable(individualVarName, createReferenceType(eAttValue.getName(), eAttValue));
+//					pathExpEXP.setDst(createVariableReference(individualVarName, locVarDst_PathExpEXP));
+//				}
+//				else {
+//					locVarDst_PathExpConstr = createLocalVariable(varName, createReferenceType(nodeType_Constr.getName(), ibexConstr.getType()));
+//					pathExpCONSTR.setDst(createVariableReference(varName, locVarDst_PathExpConstr));
+//					
+////					locVarDst_PathExpEXP = createLocalVariable("s", createReferenceType(nodeType_Exp.getName(), ibexConstr.getType()));
+//					locVarDst_PathExpEXP = createLocalVariable(varName, createReferenceType(eAttValue.getName(), eAttValue));
+//					pathExpEXP.setDst(createVariableReference(varName, locVarDst_PathExpEXP));
+//				}
+//				pathExpCONSTR.getEdgeTypes().add(refType_PathExpConstr);
+//				pathExpCONSTR.setSourceType(createClassType(nodeName_Constr, nodeType_Constr));
+//				pathExpCONSTR.setSrc(createVariableReference(nodeName_Constr, var_Constr));
+//				
+//				pathExpEXP.getEdgeTypes().add(refType_PathExpEXP);
+//				pathExpEXP.setSourceType(createClassType(nodeName_Exp, nodeType_Exp));
+//				pathExpEXP.setSrc(createVariableReference(nodeName_Exp, var_PathExpEXP));
+//				
+//				pathExpression = pathExpCONSTR.toString();
+//				pathExpressions.add(pathExpression);
+//				pathExpression = pathExpEXP.toString();
+//				pathExpressions.add(pathExpression);
+//				
+//				ClassType typ = createClassType(nodeType_Constr.getName(), nodeType_Constr);
+//				ValueReference leftOp = createVariableReference(nodeName_Constr, createParameter(nodeName_Constr, typ, ParameterDirection.get(0)));
+//				ValueReference rightOp = createVariableReference(nodeName_Exp, 
+//						createParameter(nodeName_Exp, 
+//								createClassType(nodeName_Exp, nodeType_Exp), ParameterDirection.get(0)));
+//				CompareConstraint constr = createCompareConstraint(CompareFeature.get(1), leftOp, rightOp);
+//				
+//				switch(literal) {
+//				case "UNEQUAL":
+//					constr.setFeature(CompareFeature.get(0));
+//					body.getConstraints().add(constr);
+//					break;
+//				case "EQUAL":
+//					body.getConstraints().add(constr);
+//					break;
+//				case "SMALLER" :
+//					iExpressions.add(expressionEvaluatorBuilder(ibexConstr.getType().getEType().getInstanceClass(), new String[] {locVarDst_PathExpConstr.getName(), locVarDst_PathExpEXP.getName()} , null, FunctionType.PARAMETER_ONLY, Operator.SMALLER));
+//					break;
+//				case "SMALLER_OR_EQUAL" :
+//					iExpressions.add(expressionEvaluatorBuilder(ibexConstr.getType().getEType().getInstanceClass(), new String[] {locVarDst_PathExpConstr.getName(), locVarDst_PathExpEXP.getName()} , null, FunctionType.PARAMETER_ONLY, Operator.SMALLER_OR_EQUAL));
+//					break;
+//				case "GREATER" :
+//					iExpressions.add(expressionEvaluatorBuilder(ibexConstr.getType().getEType().getInstanceClass(), new String[] {locVarDst_PathExpConstr.getName(), locVarDst_PathExpEXP.getName()} , null, FunctionType.PARAMETER_ONLY, Operator.GREATER));
+//					break;
+//				case "GREATER_OR_EQUAL" :
+//					iExpressions.add(expressionEvaluatorBuilder(ibexConstr.getType().getEType().getInstanceClass(), new String[] {locVarDst_PathExpConstr.getName(), locVarDst_PathExpEXP.getName()} , null, FunctionType.PARAMETER_ONLY, Operator.GREATER_OR_EQUAL));
+//					break;
+//				}
+//				body.getConstraints().add(pathExpCONSTR);
+//				
+//				if(allNodes.get(ibexConstr.getNode())) {
+//					Parameter par_Constr = createParameter(nodeName_Constr, createClassType(nodeType_Constr.getName(), nodeType_Constr), ParameterDirection.get(0));
+//					parameters.add(par_Constr);
+//					var_Constr = (ParameterRef) PatternLanguageFactory.eINSTANCE.createParameterRef();
+//					((ParameterRef) var_Constr).setReferredParam(par_Constr);
+//					var_Constr.setName(nodeName_Constr);
+//					var_Constr.setType(createClassType(nodeType_Constr.getName(), nodeType_Constr));
+//				}
+//				if(allNodes.containsKey(exp.getNode()) && allNodes.get(exp.getNode())) {
+//					Parameter par_Exp = createParameter(nodeName_Exp, createClassType(nodeType_Exp.getName(), nodeType_Exp), ParameterDirection.get(0));
+//					parameters.add(par_Exp);
+//					var_PathExpEXP = (ParameterRef) PatternLanguageFactory.eINSTANCE.createParameterRef();
+//					((ParameterRef) var_PathExpEXP).setReferredParam(par_Exp);
+//					var_PathExpEXP.setName(nodeName_Exp);
+//					var_PathExpEXP.setType(createClassType(nodeType_Exp.getName(), nodeType_Exp));
+//				}
+//				body.getVariables().add(var_Constr);
+//				body.getVariables().add(locVarDst_PathExpConstr);
+//				body.getVariables().add(var_PathExpEXP);
+//				body.getVariables().add(locVarDst_PathExpEXP);
+//				if(allNodes.containsKey(exp.getNode())) {
+//					body.getConstraints().add(pathExpEXP);
+//				}
+//			}
+//			else if(rhsValue instanceof IBeXConstant) {
+//			IBeXConstant con = (IBeXConstant) rhsValue;
+//			PathExpressionConstraint pathExp = PatternLanguageFactory.eINSTANCE.createPathExpressionConstraint();
+//			ReferenceType refType = createReferenceType(nodeType_Constr.getName(), ibexConstr.getType());
+//			LocalVariable locVarDst = createLocalVariable(varName, refType);
+//			
+//			pathExp.setDst(createVariableReference(varName, locVarDst));
+//			pathExp.getEdgeTypes().add(createReferenceType(ibexConstr.getType().getName(), ibexConstr.getType()));
+//			pathExp.setSourceType(createClassType(nodeName_Constr, nodeType_Constr));
+//			pathExp.setSrc(varRef_Constr);
+//			pathExpressions.add(pathExp.toString());
+//			
+//			switch(ibexConstr.getRelation().getLiteral()) {
+//			case "EQUAL" :
+//				pathExp.setDst(createLiteralValueReference(con.getValue()));
+//				break;
+//			case "UNEQUAL" :
+//				iExpressions.add(expressionEvaluatorBuilder(ibexConstr.getType().getEType().getInstanceClass(), new String[] {varName}, new Object[] {con.getValue()}, FunctionType.PARAMETER_AND_VALUE, Operator.UNEQUAL));
+//				break;
+//			case "SMALLER" :
+//				iExpressions.add(expressionEvaluatorBuilder(ibexConstr.getType().getEType().getInstanceClass(), new String[] {varName}, new Object[] {con.getValue()}, FunctionType.PARAMETER_AND_VALUE, Operator.SMALLER));
+//				break;
+//			case "SMALLER_OR_EQUAL" :
+//				iExpressions.add(expressionEvaluatorBuilder(ibexConstr.getType().getEType().getInstanceClass(), new String[] {varName}, new Object[] {con.getValue()}, FunctionType.PARAMETER_AND_VALUE, Operator.SMALLER_OR_EQUAL));
+//				break;
+//			case "GREATER_OR_EQUAL" :
+//				iExpressions.add(expressionEvaluatorBuilder(ibexConstr.getType().getEType().getInstanceClass(), new String[] {varName}, new Object[] {con.getValue()}, FunctionType.PARAMETER_AND_VALUE, Operator.GREATER_OR_EQUAL));
+//				break;
+//			case "GREATER" :
+//				iExpressions.add(expressionEvaluatorBuilder(ibexConstr.getType().getEType().getInstanceClass(), new String[] {varName}, new Object[] {con.getValue()}, FunctionType.PARAMETER_AND_VALUE, Operator.GREATER));
+//				break;
+//			}
+//			if(allNodes.get(ibexConstr.getNode())) {
+//				Parameter par_Constr = createParameter(nodeName_Constr, createClassType(nodeType_Constr.getName(), nodeType_Constr), ParameterDirection.get(0));
+//				parameters.add(par_Constr);
+//				var_Constr = (ParameterRef) PatternLanguageFactory.eINSTANCE.createParameterRef();
+//				((ParameterRef) var_Constr).setReferredParam(par_Constr);
+//				var_Constr.setName(nodeName_Constr);
+//				var_Constr.setType(createClassType(nodeType_Constr.getName(), nodeType_Constr));
+//			}
+//			body.getConstraints().add(pathExp);
+//			body.getVariables().add(locVarDst);
+//			body.getVariables().add(var_Constr);
+//			}
+//			
+//			else if(rhsValue instanceof IBeXAttributeParameter) {
+//			body.getVariables().add(var_Constr);	
+//			}
+//			
+//			else if(rhsValue instanceof IBeXEnumLiteral) {
+//				EEnumLiteral enumLiteral = ((IBeXEnumLiteral) rhsValue).getLiteral();
+//				PathExpressionConstraint pathExp = PatternLanguageFactory.eINSTANCE.createPathExpressionConstraint();
+//				EnumValue eValue = PatternLanguageFactory.eINSTANCE.createEnumValue();
+//				eValue.setLiteral(enumLiteral);
+//				eValue.setEnumeration(enumLiteral.getEEnum());
+//				pathExp.setSourceType(createClassType(nodeName_Constr, nodeType_Constr));
+//				pathExp.setSrc(varRef_Constr);
+//				pathExp.setDst(eValue);
+//				pathExp.getEdgeTypes().add(createReferenceType(ibexConstr.getType().getName(), ibexConstr.getType()));
+//				body.getConstraints().add(pathExp);
+//				}
+//			i++;
+//		}
+//		return iExpressions;
 	}
 	
 	protected void iBexEdgeToViatraSchema(EList<IBeXEdge> edges) {
