@@ -75,13 +75,14 @@ import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXStochasticAttributeVal
 
 /**
  * Class which is used to transform IBeX-Model into Viatra-Model
+ * 
  * @author Julian Barthel
  * @version 1.0
  * @since 1.0
  */
-@SuppressWarnings({ "restriction"})
-public class IBeXToViatraPatternTransformation{
-	
+@SuppressWarnings({ "restriction" })
+public class IBeXToViatraPatternTransformation {
+
 	protected PatternBody body;
 	protected Collection<Variable> parameters;
 	protected HashMap<String, Pattern> viatraPatterns;
@@ -91,32 +92,34 @@ public class IBeXToViatraPatternTransformation{
 	protected HashMap<String, Variable> variables;
 	protected Pattern patternToResolve;
 
-	public IBeXToViatraPatternTransformation(SpecificationBuilder builder){
+	public IBeXToViatraPatternTransformation(SpecificationBuilder builder) {
 		this.builder = builder;
 	}
-	public IBeXToViatraPatternTransformation(){
-		}
-	
+
+	public IBeXToViatraPatternTransformation() {
+	}
+
 	protected ClassType createClassType(String typeName, EClassifier className) {
 		ClassType type = PatternLanguageFactory.eINSTANCE.createClassType();
 		type.setTypename(typeName);
 		type.setClassname(className);
 		return type;
-	}	
+	}
+
 	protected LocalVariable createLocalVariable(String name, Type type) {
 		LocalVariable var = PatternLanguageFactory.eINSTANCE.createLocalVariable();
 		var.setName(name);
 		var.setType(type);
 		return var;
-		}
-	
+	}
+
 	protected VariableReference createVariableReference(String var, Variable variable) {
 		VariableReference ref = PatternLanguageFactory.eINSTANCE.createVariableReference();
 		ref.setVar(var);
 		ref.setVariable(variable);
 		return ref;
 	}
-	
+
 	protected Parameter createParameter(String name, Type type, ParameterDirection direction) {
 		Parameter par = PatternLanguageFactory.eINSTANCE.createParameter();
 		par.setName(name);
@@ -124,115 +127,127 @@ public class IBeXToViatraPatternTransformation{
 		par.setDirection(direction);
 		return par;
 	}
-	
+
 	protected ReferenceType createReferenceType(String typename, EStructuralFeature refname) {
 		ReferenceType refType = PatternLanguageFactory.eINSTANCE.createReferenceType();
 		refType.setTypename(typename);
 		refType.setRefname(refname);
 		return refType;
 	}
-	
-	protected CompareConstraint createCompareConstraint(CompareFeature operation, ValueReference leftOperand, ValueReference rightOperand ) {
+
+	protected CompareConstraint createCompareConstraint(CompareFeature operation, ValueReference leftOperand,
+			ValueReference rightOperand) {
 		CompareConstraint constr = PatternLanguageFactory.eINSTANCE.createCompareConstraint();
 		constr.setFeature(operation);
 		constr.setLeftOperand(leftOperand);
 		constr.setRightOperand(rightOperand);
 		return constr;
 	}
-	
+
 	protected LiteralValueReference createLiteralValueReference(Object value) {
-		if(value instanceof String) {
+		if (value instanceof String) {
 			StringValue stringVal = PatternLanguageFactory.eINSTANCE.createStringValue();
 			stringVal.setValue((String) value);
 			return stringVal;
-		}
-		else if(value instanceof Integer) {
+		} else if (value instanceof Integer) {
 			XNumberLiteral xnumlit = XbaseFactoryImpl.eINSTANCE.createXNumberLiteral();
 			NumberValue intValue = PatternLanguageFactory.eINSTANCE.createNumberValue();
-			if((Integer) value < 0)
+			if ((Integer) value < 0)
 				intValue.setNegative(true);
 			xnumlit.setValue(value.toString());
 			intValue.setValue(xnumlit);
 			return intValue;
-			}
-		else if(value instanceof java.lang.Boolean) {
+		} else if (value instanceof java.lang.Boolean) {
 			BoolValue boolValue = PatternLanguageFactory.eINSTANCE.createBoolValue();
 			XBooleanLiteral xBoolLit = XbaseFactoryImpl.eINSTANCE.createXBooleanLiteral();
 			xBoolLit.setIsTrue((boolean) value);
 			boolValue.setValue(xBoolLit);
 			return boolValue;
-		}
-		else throw new IllegalArgumentException("IlleagalArgument: Parameter " + value + " has to be from Type String, Integer or Boolean");
+		} else
+			throw new IllegalArgumentException(
+					"IlleagalArgument: Parameter " + value + " has to be from Type String, Integer or Boolean");
 	}
-	
+
 	/**
-	 *  Returns a Set with IQuerySpecification {@link IQuerySpecification} transformed out of a IBeXPatternSet, all ContextPatterns and ContextAlternatives will be transformed into
-	 *  Viatra Patterns and the from all Patterns the Specification will be created. 
-	 *  A ViatraQueryEngine {@link ViatraQueryEngine} can get these Specifications to generate Matchers or rather Matches
+	 * Returns a Set with IQuerySpecification {@link IQuerySpecification}
+	 * transformed out of a IBeXPatternSet, all ContextPatterns and
+	 * ContextAlternatives will be transformed into Viatra Patterns and the from all
+	 * Patterns the Specification will be created. A ViatraQueryEngine
+	 * {@link ViatraQueryEngine} can get these Specifications to generate Matchers
+	 * or rather Matches
 	 *
-	 * @param  patternSet  an IBeXPatternSet containing all Patterns which will be transformed to Viatra IQuerySpecification
-	 * @return      Set of all transformed Patterns into Viatra IQuerySpecification
+	 * @param patternSet an IBeXPatternSet containing all Patterns which will be
+	 *                   transformed to Viatra IQuerySpecification
+	 * @return Set of all transformed Patterns into Viatra IQuerySpecification
 	 */
-	public Set<IQuerySpecification<? extends ViatraQueryMatcher<? extends IPatternMatch>>> transformIBeXToViatra(IBeXPatternSet patternSet) throws Exception {
+	public Set<IQuerySpecification<? extends ViatraQueryMatcher<? extends IPatternMatch>>> transformIBeXToViatra(
+			IBeXPatternSet patternSet) throws Exception {
 		viatraPatterns = new HashMap<String, Pattern>();
 		viatraSpecifications = new HashSet<IQuerySpecification<? extends ViatraQueryMatcher<? extends IPatternMatch>>>();
 		ArrayList<IBeXContextAlternatives> contextAlternatives = new ArrayList<IBeXContextAlternatives>();
-		
-		for(IBeXContext context : patternSet.getContextPatterns()) {
-			if(context instanceof IBeXContextPattern) {
-				//Creates a new ViatraPattern from the IBeX-Model and put it on a List with all Patterns from the Resource
-					iBexPatternToViatraPattern((IBeXContextPattern) context);
-					parameters.clear();
-					body = null;
+
+		for (IBeXContext context : patternSet.getContextPatterns()) {
+			if (context instanceof IBeXContextPattern) {
+				// Creates a new ViatraPattern from the IBeX-Model and put it on a List with all
+				// Patterns from the Resource
+				iBexPatternToViatraPattern((IBeXContextPattern) context);
+				parameters.clear();
+				body = null;
 			}
-			if(context instanceof IBeXContextAlternatives) {
+			if (context instanceof IBeXContextAlternatives) {
 				contextAlternatives.add((IBeXContextAlternatives) context);
 				parameters.clear();
 			}
 		}
-		for(IBeXContextAlternatives alternative : contextAlternatives) {
-				iBeXContextAlternativesToViatraSchema(alternative);
-				parameters.clear();
+		for (IBeXContextAlternatives alternative : contextAlternatives) {
+			iBeXContextAlternativesToViatraSchema(alternative);
+			parameters.clear();
 		}
 		return viatraSpecifications;
 	}
-	
+
 	/**
-	 *  Returns a IQuerySpecification {@link IQuerySpecification} transformed out of a Pattern {@link Pattern} , 
-	 *  it is possible to add additional IExpressionEvaluator {@link IExpressionEvaluator} to the IQuerySpecification
+	 * Returns a IQuerySpecification {@link IQuerySpecification} transformed out of
+	 * a Pattern {@link Pattern} , it is possible to add additional
+	 * IExpressionEvaluator {@link IExpressionEvaluator} to the IQuerySpecification
 	 *
-	 * @param  pattern Pattern to create a IQuerySpecification from 
-	 * @param  expressions A Collection of additional IExpressionEvaluator which can be added to the IQuerySpecification, can be Null
-	 * @return      the created Viatra IQuerySpecification out of the Pattern
+	 * @param pattern     Pattern to create a IQuerySpecification from
+	 * @param expressions A Collection of additional IExpressionEvaluator which can
+	 *                    be added to the IQuerySpecification, can be Null
+	 * @return the created Viatra IQuerySpecification out of the Pattern
 	 */
-	public IQuerySpecification<? extends ViatraQueryMatcher<? extends IPatternMatch>> buildSpecification(Pattern pattern, Collection<IExpressionEvaluator> expressions) {
-		if(builder == null)
+	public IQuerySpecification<? extends ViatraQueryMatcher<? extends IPatternMatch>> buildSpecification(
+			Pattern pattern, Collection<IExpressionEvaluator> expressions) {
+		if (builder == null)
 			return null;
-		IQuerySpecification<? extends ViatraQueryMatcher<? extends IPatternMatch>> specification = builder.getOrCreateSpecification(pattern, true);
-		if(expressions != null && !expressions.isEmpty()) {
+		IQuerySpecification<? extends ViatraQueryMatcher<? extends IPatternMatch>> specification = builder
+				.getOrCreateSpecification(pattern, true);
+		if (expressions != null && !expressions.isEmpty()) {
 			specification.getInternalQueryRepresentation().getDisjunctBodies().getBodies().forEach(body -> {
-	    		body.setStatus(PQueryStatus.UNINITIALIZED);
-	    		expressions.forEach(exp -> new ExpressionEvaluation(body, exp, null));
-	            body.setStatus(PQueryStatus.OK);
-	    	});
+				body.setStatus(PQueryStatus.UNINITIALIZED);
+				expressions.forEach(exp -> new ExpressionEvaluation(body, exp, null));
+				body.setStatus(PQueryStatus.OK);
+			});
 		}
 		return specification;
 	}
-	
+
 	/**
-	 * For each IBeXPatternInvocation, Viatra needs a call to another pattern
-	 * For this you need to create PatternCall and a PatternCompositionConstraint which references to the other pattern
-	 * which you can get from the InvokedPattern from the IBeXPatternInvocation
+	 * For each IBeXPatternInvocation, Viatra needs a call to another pattern For
+	 * this you need to create PatternCall and a PatternCompositionConstraint which
+	 * references to the other pattern which you can get from the InvokedPattern
+	 * from the IBeXPatternInvocation
 	 * 
 	 * @param invocations List with IBeXPatternInvocation
 	 */
-	protected void iBeXInvocationsToViatraPatternCall(EList<IBeXPatternInvocation>  invocations, IBeXContextPattern patternToTransform) {
+	protected void iBeXInvocationsToViatraPatternCall(EList<IBeXPatternInvocation> invocations,
+			IBeXContextPattern patternToTransform) {
 		invocations.forEach(invoc -> {
-			if(!viatraPatterns.containsKey(invoc.getInvokedPattern().getName()))
+			if (!viatraPatterns.containsKey(invoc.getInvokedPattern().getName()))
 				try {
 					HashMap<IBeXNode, Boolean> temp_allNodes = allNodes;
 					PatternBody temp_body = body;
-					Collection<Variable> temp_parameters = parameters; 
+					Collection<Variable> temp_parameters = parameters;
 					iBexPatternToViatraPattern(invoc.getInvokedPattern());
 					allNodes = temp_allNodes;
 					body = temp_body;
@@ -242,44 +257,52 @@ public class IBeXToViatraPatternTransformation{
 				}
 			Pattern patternReference = viatraPatterns.get(invoc.getInvokedPattern().getName());
 
-			PatternCompositionConstraint pCompConstr = PatternLanguageFactory.eINSTANCE.createPatternCompositionConstraint();
+			PatternCompositionConstraint pCompConstr = PatternLanguageFactory.eINSTANCE
+					.createPatternCompositionConstraint();
 			PatternCall pCall = PatternLanguageFactory.eINSTANCE.createPatternCall();
-			
 
 			pCall.setPatternRef(patternReference);
-			
-			//In Viatra a patternCall (PatternInvocation) acts like a method call
-			//Therefore it is important that the order of parameters is correct
+
+			// In Viatra a patternCall (PatternInvocation) acts like a method call
+			// Therefore it is important that the order of parameters is correct
 			patternReference.getParameters().forEach(para -> {
 				String paraName = para.getName();
-				//iterate throw all entry's of node mapping to find the node of the called IBeX-pattern that equals the parameter of the called Viatra-Pattern
-				for(Map.Entry<IBeXNode, IBeXNode> nodeEntry : invoc.getMapping()) {
-					if(nodeEntry.getValue().getName().contentEquals(paraName)) {
+				// iterate throw all entry's of node mapping to find the node of the called
+				// IBeX-pattern that equals the parameter of the called Viatra-Pattern
+				for (Map.Entry<IBeXNode, IBeXNode> nodeEntry : invoc.getMapping()) {
+					if (nodeEntry.getValue().getName().contentEquals(paraName)) {
 						boolean callerNodeisLocal = false;
 						String callerNodeName = nodeEntry.getKey().getName();
-						//check if the node is a local node so that just a variable will be created
-						for(IBeXNode localN : patternToTransform.getLocalNodes()) {
-							if(localN.getName() == callerNodeName);
-								callerNodeisLocal = true;
+						// check if the node is a local node so that just a variable will be created
+						for (IBeXNode localN : patternToTransform.getLocalNodes()) {
+							if (localN.getName() == callerNodeName)
+								;
+							callerNodeisLocal = true;
 						}
-						if(callerNodeisLocal) {
-							LocalVariable locVar = createLocalVariable(callerNodeName, createClassType(para.getType().getTypename(), ((ClassType) para.getType()).getClassname()));
-							PathExpressionConstraint pathExp = PatternLanguageFactory.eINSTANCE.createPathExpressionConstraint();
+						if (callerNodeisLocal) {
+							LocalVariable locVar = createLocalVariable(callerNodeName, createClassType(
+									para.getType().getTypename(), ((ClassType) para.getType()).getClassname()));
+							PathExpressionConstraint pathExp = PatternLanguageFactory.eINSTANCE
+									.createPathExpressionConstraint();
 							pathExp.setDst(createVariableReference(callerNodeName, locVar));
-							pathExp.setSourceType(createClassType(para.getType().getTypename(), ((ClassType) para.getType()).getClassname()));
+							pathExp.setSourceType(createClassType(para.getType().getTypename(),
+									((ClassType) para.getType()).getClassname()));
 							pathExp.setSrc(createVariableReference(callerNodeName, locVar));
 							ValueReference ref = createVariableReference(callerNodeName, locVar);
 							pCall.getParameters().add(ref);
 							body.getConstraints().add(pathExp);
 							body.getVariables().add(locVar);
-						}
-						else {
-							Parameter locPar = createParameter(callerNodeName, createClassType(para.getType().getTypename(), ((ClassType) para.getType()).getClassname()), ParameterDirection.get(0));
+						} else {
+							Parameter locPar = createParameter(callerNodeName,
+									createClassType(para.getType().getTypename(),
+											((ClassType) para.getType()).getClassname()),
+									ParameterDirection.get(0));
 							parameters.add(locPar);
 							ParameterRef parRef = PatternLanguageFactory.eINSTANCE.createParameterRef();
 							parRef.setReferredParam(locPar);
 							parRef.setName(locPar.getName());
-							parRef.setType(createClassType(para.getType().getTypename(), ((ClassType) para.getType()).getClassname()));
+							parRef.setType(createClassType(para.getType().getTypename(),
+									((ClassType) para.getType()).getClassname()));
 							body.getVariables().add(parRef);
 							ValueReference ref = createVariableReference(callerNodeName, locPar);
 							pCall.getParameters().add(ref);
@@ -288,16 +311,16 @@ public class IBeXToViatraPatternTransformation{
 					}
 				}
 			});
-			
-			if(!invoc.isPositive()) {
+
+			if (!invoc.isPositive()) {
 				pCompConstr.setNegative(true);
 			}
 			pCompConstr.setCall(pCall);
-			body.getConstraints().add(pCompConstr); 
+			body.getConstraints().add(pCompConstr);
 		});
 	}
-	
-	public void iBeXContextAlternativesToViatraSchema(IBeXContextAlternatives alternative) {	
+
+	public void iBeXContextAlternativesToViatraSchema(IBeXContextAlternatives alternative) {
 		alternative.getAlternativePatterns().forEach(p -> {
 			try {
 				iBexPatternToViatraPattern(p);
@@ -307,24 +330,31 @@ public class IBeXToViatraPatternTransformation{
 			}
 		});
 	}
-	
+
 	protected LocalVariable addNewAttributeVariable(final IBeXAttributeExpression ibexExpr) {
-		PathExpressionConstraint attributePathExpression = PatternLanguageFactory.eINSTANCE.createPathExpressionConstraint();
-		
-		Variable nodeVariable = createLocalVariable(ibexExpr.getNode().getName(), createClassType(ibexExpr.getNode().getType().getName(), ibexExpr.getNode().getType()));
+		PathExpressionConstraint attributePathExpression = PatternLanguageFactory.eINSTANCE
+				.createPathExpressionConstraint();
+
+		Variable nodeVariable = createLocalVariable(ibexExpr.getNode().getName(),
+				createClassType(ibexExpr.getNode().getType().getName(), ibexExpr.getNode().getType()));
 		body.getVariables().add(nodeVariable);
-		attributePathExpression.setSourceType(createClassType(ibexExpr.getNode().getName(), ibexExpr.getNode().getType()));
+		attributePathExpression
+				.setSourceType(createClassType(ibexExpr.getNode().getName(), ibexExpr.getNode().getType()));
 		attributePathExpression.setSrc(createVariableReference(ibexExpr.getNode().getName(), nodeVariable));
-		
+
 		ReferenceType attributeType = createReferenceType(ibexExpr.getAttribute().getName(), ibexExpr.getAttribute());
-		LocalVariable attributeVariable = createLocalVariable(ibexExpr.getNode().getName()+"_"+ibexExpr.getAttribute().getName(), attributeType);
+		LocalVariable attributeVariable = createLocalVariable(
+				ibexExpr.getNode().getName() + "_" + ibexExpr.getAttribute().getName(), attributeType);
 		body.getVariables().add(attributeVariable);
 		attributePathExpression.getEdgeTypes().add(attributeType);
-		attributePathExpression.setDst(createVariableReference(ibexExpr.getNode().getName()+"_"+ibexExpr.getAttribute().getName(), attributeVariable));
+		attributePathExpression.setDst(createVariableReference(
+				ibexExpr.getNode().getName() + "_" + ibexExpr.getAttribute().getName(), attributeVariable));
 		body.getConstraints().add(attributePathExpression);
-		
-		if(allNodes.containsKey(ibexExpr.getNode()) && allNodes.get(ibexExpr.getNode())) {
-			Parameter parameter = createParameter(ibexExpr.getNode().getName(), createClassType(ibexExpr.getNode().getType().getName(), ibexExpr.getNode().getType()), ParameterDirection.INOUT);
+
+		if (allNodes.containsKey(ibexExpr.getNode()) && allNodes.get(ibexExpr.getNode())) {
+			Parameter parameter = createParameter(ibexExpr.getNode().getName(),
+					createClassType(ibexExpr.getNode().getType().getName(), ibexExpr.getNode().getType()),
+					ParameterDirection.INOUT);
 			parameters.add(parameter);
 			ParameterRef parameterRef = PatternLanguageFactory.eINSTANCE.createParameterRef();
 			parameterRef.setReferredParam(parameter);
@@ -332,78 +362,91 @@ public class IBeXToViatraPatternTransformation{
 			parameterRef.setType(createClassType(ibexExpr.getNode().getType().getName(), ibexExpr.getNode().getType()));
 			body.getVariables().add(parameterRef);
 		}
-			
+
 		return attributeVariable;
 	}
-	
-	protected Collection<IExpressionEvaluator> IBeXConstraintToViatraConstraint(List<IBeXAttributeConstraint> constraints) {
+
+	protected Collection<IExpressionEvaluator> IBeXConstraintToViatraConstraint(
+			List<IBeXAttributeConstraint> constraints) {
 		Set<IExpressionEvaluator> iExpressions = new LinkedHashSet<IExpressionEvaluator>();
 
-		for(IBeXAttributeConstraint ibexConstraint : constraints) {
+		for (IBeXAttributeConstraint ibexConstraint : constraints) {
 			IBeXAttributeValue lhs = ibexConstraint.getLhs();
 			IBeXAttributeValue rhs = ibexConstraint.getRhs();
-			if(lhs instanceof IBeXAttributeParameter || rhs instanceof IBeXAttributeParameter)
+			if (lhs instanceof IBeXAttributeParameter || rhs instanceof IBeXAttributeParameter)
 				continue;
-			if(lhs instanceof IBeXStochasticAttributeValue || rhs instanceof IBeXStochasticAttributeValue)
+			if (lhs instanceof IBeXStochasticAttributeValue || rhs instanceof IBeXStochasticAttributeValue)
 				continue;
-			if(lhs instanceof IBeXArithmeticValue || rhs instanceof IBeXArithmeticValue)
+			if (lhs instanceof IBeXArithmeticValue || rhs instanceof IBeXArithmeticValue)
 				continue;
-			
-			if(lhs instanceof IBeXConstant && rhs instanceof IBeXConstant) {
-				iExpressions.add(IExpressionEvaluatorBuilder.expressionEvaluatorBuilder((IBeXConstant)lhs, (IBeXConstant)rhs, ibexConstraint.getRelation()));
-			} else if(lhs instanceof IBeXEnumLiteral && rhs instanceof IBeXEnumLiteral) {
-				iExpressions.add(IExpressionEvaluatorBuilder.expressionEvaluatorBuilder((IBeXEnumLiteral)lhs, (IBeXEnumLiteral)rhs, ibexConstraint.getRelation()));
-			} else if(lhs instanceof IBeXAttributeExpression && rhs instanceof IBeXAttributeExpression) {
-				IBeXAttributeExpression lhsExpr = (IBeXAttributeExpression)lhs;
-				IBeXAttributeExpression rhsExpr = (IBeXAttributeExpression)rhs;
-				
+
+			if (lhs instanceof IBeXConstant && rhs instanceof IBeXConstant) {
+				iExpressions.add(IExpressionEvaluatorBuilder.expressionEvaluatorBuilder((IBeXConstant) lhs,
+						(IBeXConstant) rhs, ibexConstraint.getRelation()));
+			} else if (lhs instanceof IBeXEnumLiteral && rhs instanceof IBeXEnumLiteral) {
+				iExpressions.add(IExpressionEvaluatorBuilder.expressionEvaluatorBuilder((IBeXEnumLiteral) lhs,
+						(IBeXEnumLiteral) rhs, ibexConstraint.getRelation()));
+			} else if (lhs instanceof IBeXAttributeExpression && rhs instanceof IBeXAttributeExpression) {
+				IBeXAttributeExpression lhsExpr = (IBeXAttributeExpression) lhs;
+				IBeXAttributeExpression rhsExpr = (IBeXAttributeExpression) rhs;
+
 				LocalVariable lhsParam = addNewAttributeVariable(lhsExpr);
 				LocalVariable rhsParam = addNewAttributeVariable(rhsExpr);
-				
-				iExpressions.add(IExpressionEvaluatorBuilder.expressionEvaluatorBuilder(lhsExpr, rhsExpr, lhsParam.getName(), rhsParam.getName(), ibexConstraint.getRelation()));
-			} else if((lhs instanceof IBeXAttributeExpression && !(rhs instanceof IBeXAttributeExpression)) || 
-					(!(lhs instanceof IBeXAttributeExpression) && rhs instanceof IBeXAttributeExpression)) {
+
+				iExpressions.add(IExpressionEvaluatorBuilder.expressionEvaluatorBuilder(lhsExpr, rhsExpr,
+						lhsParam.getName(), rhsParam.getName(), ibexConstraint.getRelation()));
+			} else if ((lhs instanceof IBeXAttributeExpression && !(rhs instanceof IBeXAttributeExpression))
+					|| (!(lhs instanceof IBeXAttributeExpression) && rhs instanceof IBeXAttributeExpression)) {
 				IBeXAttributeExpression lhsExpr = null;
 				LocalVariable param = null;
 				IBeXAttributeValue rhsExpr = null;
 				IBeXRelation relation = null;
-				
-				if(lhs instanceof IBeXAttributeExpression) {
+
+				if (lhs instanceof IBeXAttributeExpression) {
 					lhsExpr = (IBeXAttributeExpression) lhs;
 					rhsExpr = rhs;
 					relation = ibexConstraint.getRelation();
-				}else {
+				} else {
 					lhsExpr = (IBeXAttributeExpression) rhs;
 					rhsExpr = lhs;
 					relation = invertRelation(ibexConstraint.getRelation());
 				}
 				param = addNewAttributeVariable(lhsExpr);
-				
-				if(rhsExpr instanceof IBeXConstant) {
-					iExpressions.add(IExpressionEvaluatorBuilder.expressionEvaluatorBuilder(lhsExpr, (IBeXConstant)rhsExpr, param.getName(), relation));
+
+				if (rhsExpr instanceof IBeXConstant) {
+					iExpressions.add(IExpressionEvaluatorBuilder.expressionEvaluatorBuilder(lhsExpr,
+							(IBeXConstant) rhsExpr, param.getName(), relation));
 				} else {
-					iExpressions.add(IExpressionEvaluatorBuilder.expressionEvaluatorBuilder(lhsExpr, (IBeXEnumLiteral)rhsExpr, param.getName(), relation));
+					iExpressions.add(IExpressionEvaluatorBuilder.expressionEvaluatorBuilder(lhsExpr,
+							(IBeXEnumLiteral) rhsExpr, param.getName(), relation));
 				}
 
 			}
 		}
 		return iExpressions;
 	}
-	
+
 	public IBeXRelation invertRelation(IBeXRelation op) {
-		switch(op) {
-			case EQUAL: return IBeXRelation.EQUAL;
-			case UNEQUAL: return IBeXRelation.UNEQUAL;
-			case SMALLER: return IBeXRelation.GREATER;
-			case SMALLER_OR_EQUAL: return IBeXRelation.GREATER_OR_EQUAL;
-			case GREATER: return IBeXRelation.SMALLER;
-			case GREATER_OR_EQUAL: return IBeXRelation.SMALLER_OR_EQUAL;
-			default: return null;
+		switch (op) {
+		case EQUAL:
+			return IBeXRelation.EQUAL;
+		case UNEQUAL:
+			return IBeXRelation.UNEQUAL;
+		case SMALLER:
+			return IBeXRelation.GREATER;
+		case SMALLER_OR_EQUAL:
+			return IBeXRelation.GREATER_OR_EQUAL;
+		case GREATER:
+			return IBeXRelation.SMALLER;
+		case GREATER_OR_EQUAL:
+			return IBeXRelation.SMALLER_OR_EQUAL;
+		default:
+			return null;
 		}
 	}
-	
+
 	protected void iBexEdgeToViatraSchema(EList<IBeXEdge> edges) {
-		for(IBeXEdge edge : edges) {
+		for (IBeXEdge edge : edges) {
 			PathExpressionConstraint pathExp = PatternLanguageFactory.eINSTANCE.createPathExpressionConstraint();
 			ReferenceType refType = createReferenceType(edge.getType().getName(), edge.getType());
 			LocalVariable locVarDst = createLocalVariable(edge.getTargetNode().getName(), refType);
@@ -412,39 +455,47 @@ public class IBeXToViatraPatternTransformation{
 			pathExp.setSourceType(createClassType(edge.getSourceNode().getName(), edge.getSourceNode().getType()));
 			pathExp.setDst(createVariableReference(edge.getTargetNode().getName(), locVarDst));
 			pathExp.setSrc(createVariableReference(edge.getSourceNode().getName(), locVarSrc));
-			if(allNodes.containsKey(edge.getSourceNode())) {
+			if (allNodes.containsKey(edge.getSourceNode())) {
 				body.getVariables().add(locVarSrc);
 			}
-			if(allNodes.containsKey(edge.getTargetNode())) {
+			if (allNodes.containsKey(edge.getTargetNode())) {
 				body.getVariables().add(locVarDst);
 			}
 			body.getConstraints().add(pathExp);
 		}
 	}
-	
+
 	protected List<Constraint> iBeXInjectiveConstraintToViatra(EList<IBeXInjectivityConstraint> pairs) {
 		ArrayList<Constraint> ret = new ArrayList<Constraint>();
-		//Iteration through all NodePairs and create CompareConstraint for all possible combinations (no duplicates)
-		for(IBeXInjectivityConstraint pair : pairs) {
-			for(int i = 0; i < pair.getValues().size(); i++) {
-				for(int j = i+1; j < pair.getValues().size() ; j++) {
+		// Iteration through all NodePairs and create CompareConstraint for all possible
+		// combinations (no duplicates)
+		for (IBeXInjectivityConstraint pair : pairs) {
+			for (int i = 0; i < pair.getValues().size(); i++) {
+				for (int j = i + 1; j < pair.getValues().size(); j++) {
 					IBeXNode tempLeft = pair.getValues().get(i);
 					IBeXNode tempRight = pair.getValues().get(j);
-					ValueReference leftOp = createVariableReference(tempLeft.getName(), createParameter(tempLeft.getName(), createClassType(tempLeft.getType().getName(), tempLeft.getType()), ParameterDirection.get(1)));
-					ValueReference rightOp = createVariableReference(tempRight.getName(), createParameter(tempRight.getName(), createClassType(tempRight.getType().getName(), tempRight.getType()), ParameterDirection.get(1)));
+					ValueReference leftOp = createVariableReference(tempLeft.getName(),
+							createParameter(tempLeft.getName(),
+									createClassType(tempLeft.getType().getName(), tempLeft.getType()),
+									ParameterDirection.get(1)));
+					ValueReference rightOp = createVariableReference(tempRight.getName(),
+							createParameter(tempRight.getName(),
+									createClassType(tempRight.getType().getName(), tempRight.getType()),
+									ParameterDirection.get(1)));
 					ret.add(createCompareConstraint(CompareFeature.get(1), leftOp, rightOp));
 				}
 			}
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * Method to transform a IBeXPattern into the Viatra-VQL-schema-model
+	 * 
 	 * @param pattern The IBeXContextPattern which will be transformed
 	 */
 	public Pattern iBexPatternToViatraPattern(IBeXContextPattern pattern) throws Exception {
-		if(viatraPatterns.containsKey(pattern.getName())) {
+		if (viatraPatterns.containsKey(pattern.getName())) {
 			return null;
 		}
 		variables = new HashMap<String, Variable>();
@@ -460,59 +511,60 @@ public class IBeXToViatraPatternTransformation{
 			x.setName("LOCAL" + x.getName());
 			allNodes.put(x, false);
 		});
-		if(!pattern.getInvocations().isEmpty()){
+		if (!pattern.getInvocations().isEmpty()) {
 			iBeXInvocationsToViatraPatternCall(pattern.getInvocations(), pattern);
 		}
 		expressions.addAll(IBeXConstraintToViatraConstraint(pattern.getAttributeConstraint()));
-		
+
 		body.getConstraints().addAll(iBeXInjectiveConstraintToViatra(pattern.getInjectivityConstraints()));
-		
+
 		iBexEdgeToViatraSchema(pattern.getLocalEdges());
-		
+
 //		expressions.addAll(iBeXCSPToViatra(pattern.getCsps()));
-		
-		if(!allNodes.isEmpty()) {
-		for(Map.Entry<IBeXNode, Boolean> node : allNodes.entrySet()) {
-			nodeName = node.getKey().getName();
-			nodeType = node.getKey().getType();
-			ClassType type = createClassType(nodeType.getName(), nodeType);
-			Variable var = createLocalVariable(nodeName, type);
-			if(node.getValue()) {
-				Parameter par = createParameter(nodeName, createClassType(nodeType.getName(), nodeType), ParameterDirection.get(0));
-				parameters.add(par);
-				var = (ParameterRef) PatternLanguageFactory.eINSTANCE.createParameterRef();
-				((ParameterRef) var).setReferredParam(par);
-				var.setName(nodeName);
-				var.setType(createClassType(nodeType.getName(), nodeType));
-			}  
-			else {
-				PathExpressionConstraint pathExp = PatternLanguageFactory.eINSTANCE.createPathExpressionConstraint();
-				pathExp.setDst(createVariableReference(nodeName, var));
-				pathExp.setSourceType(createClassType(nodeType.getName(), nodeType));
-				pathExp.setSrc(createVariableReference(nodeName, var));
-				body.getConstraints().add(pathExp);
+
+		if (!allNodes.isEmpty()) {
+			for (Map.Entry<IBeXNode, Boolean> node : allNodes.entrySet()) {
+				nodeName = node.getKey().getName();
+				nodeType = node.getKey().getType();
+				ClassType type = createClassType(nodeType.getName(), nodeType);
+				Variable var = createLocalVariable(nodeName, type);
+				if (node.getValue()) {
+					Parameter par = createParameter(nodeName, createClassType(nodeType.getName(), nodeType),
+							ParameterDirection.get(0));
+					parameters.add(par);
+					var = (ParameterRef) PatternLanguageFactory.eINSTANCE.createParameterRef();
+					((ParameterRef) var).setReferredParam(par);
+					var.setName(nodeName);
+					var.setType(createClassType(nodeType.getName(), nodeType));
+				} else {
+					PathExpressionConstraint pathExp = PatternLanguageFactory.eINSTANCE
+							.createPathExpressionConstraint();
+					pathExp.setDst(createVariableReference(nodeName, var));
+					pathExp.setSourceType(createClassType(nodeType.getName(), nodeType));
+					pathExp.setSrc(createVariableReference(nodeName, var));
+					body.getConstraints().add(pathExp);
+				}
+				body.getVariables().add(var);
 			}
-			body.getVariables().add(var);
 		}
-		}
-		viatraSpecifications.add(buildSpecification(setViatraPattern(patternToResolve, pattern.getName()), expressions));
-		viatraPatterns.put(pattern.getName() ,setViatraPattern(patternToResolve, pattern.getName()));
+		viatraSpecifications
+				.add(buildSpecification(setViatraPattern(patternToResolve, pattern.getName()), expressions));
+		viatraPatterns.put(pattern.getName(), setViatraPattern(patternToResolve, pattern.getName()));
 		return setViatraPattern(patternToResolve, pattern.getName());
 	}
-	
+
 	/**
-	 * Removes duplicate variables by there name
-	 * Special case there can be two equal variables
+	 * Removes duplicate variables by there name Special case there can be two equal
+	 * variables
 	 * 
-	 * @param variables The Collection with variables 
+	 * @param variables The Collection with variables
 	 */
 	protected Collection<Variable> removeDubsInVariables(Collection<Variable> variables) {
-		variables = variables.stream()
-                .collect(collectingAndThen(toCollection(() -> new TreeSet<>(comparing(Variable::getName))),
-                                           ArrayList::new));
+		variables = variables.stream().collect(
+				collectingAndThen(toCollection(() -> new TreeSet<>(comparing(Variable::getName))), ArrayList::new));
 		return variables;
 	}
-	
+
 	/**
 	 * building/transforming a ViatraPattern out of IBeX informations
 	 * 
@@ -521,13 +573,14 @@ public class IBeXToViatraPatternTransformation{
 	 */
 	public Pattern setViatraPattern(Pattern viatraPattern, String patternName) {
 		viatraPattern.setName(patternName);
-		//Add Parameters, Bodies, Annotations to the ViatraPattern (patternlanguage.emf.vql.Pattern)
+		// Add Parameters, Bodies, Annotations to the ViatraPattern
+		// (patternlanguage.emf.vql.Pattern)
 		parameters = removeDubsInVariables(parameters);
 		viatraPattern.getParameters().addAll(parameters);
 		viatraPattern.getBodies().add(body);
 		return viatraPattern;
 	}
-	
+
 //	/**
 //	 * The parameters: parameters and values needs to have a length of two and all additionally Elements will be ignored
 //	 * only works for int, boolean and String as Types
