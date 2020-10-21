@@ -29,7 +29,7 @@ import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXNode;
 
 @SuppressWarnings("restriction")
 public class TGGIBeXToViatraPatternTransformation extends IBeXToViatraPatternTransformation {
-	
+
 	public TGGIBeXToViatraPatternTransformation(SpecificationBuilder builder) {
 		super(builder);
 	}
@@ -37,36 +37,40 @@ public class TGGIBeXToViatraPatternTransformation extends IBeXToViatraPatternTra
 	private List<IExpressionEvaluator> iBeXCSPToViatra(EList<IBeXCSP> csps) {
 		List<IExpressionEvaluator> cspExpressions = new ArrayList<IExpressionEvaluator>();
 		int i = 0;
-		for(IBeXCSP csp : csps) {
-			List<String> inputParameterNames = new ArrayList<String>(); 
-			for(IBeXAttributeValue value : csp.getValues()) {
-				if(value instanceof IBeXAttributeExpression) {
+		for (IBeXCSP csp : csps) {
+			List<String> inputParameterNames = new ArrayList<String>();
+			for (IBeXAttributeValue value : csp.getValues()) {
+				if (value instanceof IBeXAttributeExpression) {
 					String nodeTypeName = ((IBeXAttributeExpression) value).getNode().getType().getName();
 					String nodeName = ((IBeXAttributeExpression) value).getNode().getName();
 					EAttribute eAttValue = ((IBeXAttributeExpression) value).getAttribute();
-					PathExpressionConstraint pathExp = PatternLanguageFactory.eINSTANCE.createPathExpressionConstraint();
-					LocalVariable locVar = createLocalVariable(nodeName + "_CSP_"+ i, createReferenceType(eAttValue.getName(), eAttValue));
-					Variable var_PathExp = createLocalVariable(nodeName, createClassType(nodeTypeName, ((IBeXAttributeExpression) value).getNode().getType()));
+					PathExpressionConstraint pathExp = PatternLanguageFactory.eINSTANCE
+							.createPathExpressionConstraint();
+					LocalVariable locVar = createLocalVariable(nodeName + "_CSP_" + i,
+							createReferenceType(eAttValue.getName(), eAttValue));
+					Variable var_PathExp = createLocalVariable(nodeName,
+							createClassType(nodeTypeName, ((IBeXAttributeExpression) value).getNode().getType()));
 					ReferenceType refType_PathExp = createReferenceType(eAttValue.getName(), eAttValue);
 					pathExp.setDst(createVariableReference(nodeName + "_CSP_" + i, locVar));
 					pathExp.getEdgeTypes().add(refType_PathExp);
-					pathExp.setSourceType(createClassType(nodeName, ((IBeXAttributeExpression) value).getNode().getType()));
+					pathExp.setSourceType(
+							createClassType(nodeName, ((IBeXAttributeExpression) value).getNode().getType()));
 					pathExp.setSrc(createVariableReference(nodeName, var_PathExp));
-				 	inputParameterNames.add(locVar.getName());
-				 	body.getConstraints().add(pathExp);
-				 	body.getVariables().add(locVar);
-				 	body.getVariables().add(var_PathExp);
-			 	}
+					inputParameterNames.add(locVar.getName());
+					body.getConstraints().add(pathExp);
+					body.getVariables().add(locVar);
+					body.getVariables().add(var_PathExp);
+				}
 			}
 			cspExpressions.add(iBeXCSPExpressionEvaluatorBuilder(csp, inputParameterNames, i));
 			i++;
 		}
 		return cspExpressions;
 	}
-	
+
 	@Override
 	public Pattern iBexPatternToViatraPattern(IBeXContextPattern pattern) throws Exception {
-		if(viatraPatterns.containsKey(pattern.getName())) {
+		if (viatraPatterns.containsKey(pattern.getName())) {
 			return null;
 		}
 		variables = new HashMap<String, Variable>();
@@ -81,48 +85,52 @@ public class TGGIBeXToViatraPatternTransformation extends IBeXToViatraPatternTra
 		pattern.getLocalNodes().forEach(x -> {
 			allNodes.put(x, false);
 		});
-		if(!pattern.getInvocations().isEmpty()){
+		if (!pattern.getInvocations().isEmpty()) {
 			iBeXInvocationsToViatraPatternCall(pattern.getInvocations(), pattern);
 		}
 		expressions.addAll(IBeXConstraintToViatraConstraint(pattern.getAttributeConstraint()));
-		
+
 		body.getConstraints().addAll(iBeXInjectiveConstraintToViatra(pattern.getInjectivityConstraints()));
-		
+
 		iBexEdgeToViatraSchema(pattern.getLocalEdges());
-		
+
 		expressions.addAll(iBeXCSPToViatra(pattern.getCsps()));
-		
-		if(!allNodes.isEmpty()) {
-		for(Map.Entry<IBeXNode, Boolean> node : allNodes.entrySet()) {
-			nodeName = node.getKey().getName();
-			nodeType = node.getKey().getType();
-			ClassType type = createClassType(nodeType.getName(), nodeType);
-			Variable var = createLocalVariable(nodeName, type);
-			if(node.getValue()) {
-				Parameter par = createParameter(nodeName, createClassType(nodeType.getName(), nodeType), ParameterDirection.get(0));
-				parameters.add(par);
-				var = (ParameterRef) PatternLanguageFactory.eINSTANCE.createParameterRef();
-				((ParameterRef) var).setReferredParam(par);
-				var.setName(nodeName);
-				var.setType(createClassType(nodeType.getName(), nodeType));
-			}  
-			else {
-				PathExpressionConstraint pathExp = PatternLanguageFactory.eINSTANCE.createPathExpressionConstraint();
-				pathExp.setDst(createVariableReference(nodeName, var));
-				pathExp.setSourceType(createClassType(nodeType.getName(), nodeType));
-				pathExp.setSrc(createVariableReference(nodeName, var));
-				body.getConstraints().add(pathExp);
+
+		if (!allNodes.isEmpty()) {
+			for (Map.Entry<IBeXNode, Boolean> node : allNodes.entrySet()) {
+				nodeName = node.getKey().getName();
+				nodeType = node.getKey().getType();
+				ClassType type = createClassType(nodeType.getName(), nodeType);
+				Variable var = createLocalVariable(nodeName, type);
+				if (node.getValue()) {
+					Parameter par = createParameter(nodeName, createClassType(nodeType.getName(), nodeType),
+							ParameterDirection.get(0));
+					parameters.add(par);
+					var = (ParameterRef) PatternLanguageFactory.eINSTANCE.createParameterRef();
+					((ParameterRef) var).setReferredParam(par);
+					var.setName(nodeName);
+					var.setType(createClassType(nodeType.getName(), nodeType));
+				} else {
+					PathExpressionConstraint pathExp = PatternLanguageFactory.eINSTANCE
+							.createPathExpressionConstraint();
+					pathExp.setDst(createVariableReference(nodeName, var));
+					pathExp.setSourceType(createClassType(nodeType.getName(), nodeType));
+					pathExp.setSrc(createVariableReference(nodeName, var));
+					body.getConstraints().add(pathExp);
+				}
+				body.getVariables().add(var);
 			}
-			body.getVariables().add(var);
 		}
-		}
-		viatraSpecifications.add(buildSpecification(setViatraPattern(patternToResolve, pattern.getName()), expressions));
-		viatraPatterns.put(pattern.getName() ,setViatraPattern(patternToResolve, pattern.getName()));
+		viatraSpecifications
+				.add(buildSpecification(setViatraPattern(patternToResolve, pattern.getName()), expressions));
+		viatraPatterns.put(pattern.getName(), setViatraPattern(patternToResolve, pattern.getName()));
 		return setViatraPattern(patternToResolve, pattern.getName());
-		
+
 	}
-	
-	private IExpressionEvaluator iBeXCSPExpressionEvaluatorBuilder(IBeXCSP csp, List<String> inputParameterNames, int numberOfCsp) {
-		return new CSPIExpressionEvaluatorBuilder().iBeXCSPExpressionEvaluatorBuilder(csp, inputParameterNames, numberOfCsp);
+
+	private IExpressionEvaluator iBeXCSPExpressionEvaluatorBuilder(IBeXCSP csp, List<String> inputParameterNames,
+			int numberOfCsp) {
+		return new CSPIExpressionEvaluatorBuilder().iBeXCSPExpressionEvaluatorBuilder(csp, inputParameterNames,
+				numberOfCsp);
 	}
 }
