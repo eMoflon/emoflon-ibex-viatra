@@ -217,7 +217,6 @@ public class ViatraGTEngine implements IContextPatternInterpreter {
 			//fastest call to trigger the IMatchUpdateListener
 			matcher.countMatches();
 		}
-		app.notifySubscriptions();
 	}
 
 	@Override
