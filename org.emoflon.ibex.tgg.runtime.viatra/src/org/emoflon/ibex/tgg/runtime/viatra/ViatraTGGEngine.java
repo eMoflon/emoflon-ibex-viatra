@@ -140,7 +140,6 @@ public class ViatraTGGEngine extends ViatraGTEngine implements IBlackInterpreter
 			}
 		}
 		notifyMatches.clear();
-		app.notifySubscriptions();
 	}
 	
 	@Override
