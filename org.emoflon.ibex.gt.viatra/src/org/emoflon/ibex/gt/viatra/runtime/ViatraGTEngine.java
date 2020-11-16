@@ -4,7 +4,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -51,6 +55,9 @@ public class ViatraGTEngine implements IContextPatternInterpreter {
 	protected ArrayList<ViatraQueryMatcher<?>> matchers;
 	
 	protected Set<IQuerySpecification<? extends ViatraQueryMatcher<? extends IPatternMatch>>> specifications;
+	
+	protected Map<String, Collection<IMatch>> addedMatches = Collections.synchronizedMap(new HashMap<>());
+	protected Map<String, Collection<IMatch>> removedMatches = Collections.synchronizedMap(new HashMap<>());
 	
 	/**
 	 * The resourceset
@@ -193,16 +200,12 @@ public class ViatraGTEngine implements IContextPatternInterpreter {
 				
 				@Override
 				public void notifyDisappearance(IPatternMatch match) {
-					IMatch iMatch = createMatch(match);
-//					System.out.println("Match DIS: " +  iMatch);
-					app.removeMatch(iMatch);
+					removeMatch(match);
 				}
 				
 				@Override
 				public void notifyAppearance(IPatternMatch match) {
-					IMatch iMatch = createMatch(match);
-//					System.out.println("Match APP: " +  iMatch);
-					app.addMatch(iMatch);
+					addMatch(match);
 				}
 			};
 			engine.addMatchUpdateListener(matcher, listener, true);
@@ -216,6 +219,51 @@ public class ViatraGTEngine implements IContextPatternInterpreter {
 		for(ViatraQueryMatcher<?> matcher : matchers) {
 			//fastest call to trigger the IMatchUpdateListener
 			matcher.countMatches();
+		}
+		// add new matches
+		for(Collection<IMatch> matches : addedMatches.values()) {
+			for(IMatch match : matches) {
+				app.addMatch(match);
+			}
+		}
+			
+		// delete invalid matches
+		for(Collection<IMatch> matches : removedMatches.values()) {
+			for(IMatch match : matches) {
+				app.removeMatch(match);
+			}
+		}
+		
+		addedMatches.clear();
+		removedMatches.clear();
+		
+	}
+	
+	public void addMatch(IPatternMatch vMatch) {
+		Collection<IMatch> matches = addedMatches.get(vMatch.patternName());
+		if(matches == null) {
+			matches = Collections.synchronizedSet(new LinkedHashSet<>());
+			addedMatches.put(vMatch.patternName(), matches);
+		}
+		IMatch iMatch = createMatch(vMatch);
+		matches.add(iMatch);
+		
+		if(removedMatches.containsKey(vMatch.patternName()) && removedMatches.get(vMatch.patternName()).contains(iMatch)) {
+			matches.remove(iMatch);
+		}
+	}
+	
+	public void removeMatch(IPatternMatch vMatch) {
+		Collection<IMatch> matches = removedMatches.get(vMatch.patternName());
+		if(matches == null) {
+			matches = Collections.synchronizedSet(new LinkedHashSet<>());
+			removedMatches.put(vMatch.patternName(), matches);
+		}
+		IMatch iMatch = createMatch(vMatch);
+		matches.add(iMatch);
+		
+		if(addedMatches.containsKey(vMatch.patternName()) && addedMatches.get(vMatch.patternName()).contains(iMatch)) {
+			matches.remove(iMatch);
 		}
 	}
 
