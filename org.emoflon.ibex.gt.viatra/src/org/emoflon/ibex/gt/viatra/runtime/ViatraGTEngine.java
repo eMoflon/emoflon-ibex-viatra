@@ -67,6 +67,8 @@ public class ViatraGTEngine implements IContextPatternInterpreter {
 	 * The path for debugging output.
 	 */
 	protected Optional<String> debugPath = Optional.empty();
+
+	private final IPatternInterpreterProperties properties = new ViatraProperties();
 	
 	
 	public ViatraGTEngine() {
@@ -238,6 +240,6 @@ public class ViatraGTEngine implements IContextPatternInterpreter {
 
 	@Override
 	public IPatternInterpreterProperties getProperties() {
-		return new ViatraProperties();
+		return properties ;
 	}
 }
