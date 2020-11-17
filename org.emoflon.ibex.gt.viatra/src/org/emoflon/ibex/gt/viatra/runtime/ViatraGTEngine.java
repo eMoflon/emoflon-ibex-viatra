@@ -245,11 +245,13 @@ public class ViatraGTEngine implements IContextPatternInterpreter {
 			matches = Collections.synchronizedSet(new LinkedHashSet<>());
 			addedMatches.put(vMatch.patternName(), matches);
 		}
+		
 		IMatch iMatch = createMatch(vMatch);
-		matches.add(iMatch);
 		
 		if(removedMatches.containsKey(vMatch.patternName()) && removedMatches.get(vMatch.patternName()).contains(iMatch)) {
-			matches.remove(iMatch);
+			removedMatches.get(vMatch.patternName()).remove(iMatch);
+		} else {
+			matches.add(iMatch);
 		}
 	}
 	
@@ -260,10 +262,11 @@ public class ViatraGTEngine implements IContextPatternInterpreter {
 			removedMatches.put(vMatch.patternName(), matches);
 		}
 		IMatch iMatch = createMatch(vMatch);
-		matches.add(iMatch);
-		
+
 		if(addedMatches.containsKey(vMatch.patternName()) && addedMatches.get(vMatch.patternName()).contains(iMatch)) {
-			matches.remove(iMatch);
+			addedMatches.get(vMatch.patternName()).remove(iMatch);
+		} else {
+			matches.add(iMatch);
 		}
 	}
 
