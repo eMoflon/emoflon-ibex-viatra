@@ -32,6 +32,7 @@ import org.eclipse.viatra.query.runtime.emf.EMFScope;
 import org.emoflon.ibex.common.operational.IContextPatternInterpreter;
 import org.emoflon.ibex.common.operational.IMatch;
 import org.emoflon.ibex.common.operational.IMatchObserver;
+import org.emoflon.ibex.common.operational.IPatternInterpreterProperties;
 import org.emoflon.ibex.patternmodel.IBeXPatternModel.IBeXPatternSet;
 
 public class ViatraGTEngine implements IContextPatternInterpreter {
@@ -233,5 +234,10 @@ public class ViatraGTEngine implements IContextPatternInterpreter {
 	
 	protected IMatch createMatch(final IPatternMatch match) {
 		return new ViatraGTMatch(match);
+	}
+
+	@Override
+	public IPatternInterpreterProperties getProperties() {
+		return new ViatraProperties();
 	}
 }
